@@ -187,7 +187,6 @@ def update_user(
 
 @app.delete("/api/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
-    # First, get the user
     result = db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
     if not user:
@@ -196,16 +195,16 @@ def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
             detail="User not found",
         )
 
-    # ✅ First, delete all posts by this user
+    # First, delete all posts by this user
     result = db.execute(select(models.Post).where(models.Post.user_id == user_id))
     user_posts = result.scalars().all()
     
     for post in user_posts:
         db.delete(post)
     
-    # Now delete the user
     db.delete(user)
     db.commit()
+    db.refresh()
 
 
 @app.get("/api/posts", response_model=list[PostResponse])
