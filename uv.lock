@@ -48,6 +48,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "greenlet" },
     { name = "jinja2" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
@@ -57,6 +58,7 @@ dependencies = [
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.128.0" },
+    { name = "greenlet", specifier = ">=3.3.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "sqlalchemy", specifier = ">=2.0.45" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.40.0" },
