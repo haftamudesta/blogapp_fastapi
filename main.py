@@ -16,14 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import models
 from database import Base, engine, get_db
-from schemas import (
-    PostCreate,
-    PostResponse,
-    PostUpdate,
-    UserCreate,
-    UserResponse,
-    UserUpdate,
-)
+from routers import posts, users
 
 
 @asynccontextmanager
@@ -43,12 +36,15 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 
 templates = Jinja2Templates(directory="templates")
 
+app.include_router(users.router, prefix="/api/users", tags=["users"])
+app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
+
 
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
 async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(
-        select(models.Post).options(selectinload(models.Post.author)),#Egger loading
+        select(models.Post).options(selectinload(models.Post.author)),
     )
     posts = result.scalars().all()
     return templates.TemplateResponse(
@@ -78,6 +74,32 @@ async def post_page(
             {"post": post, "title": title},
         )
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+
+
+@app.get("/users/{user_id}/posts", include_in_schema=False, name="user_posts")
+async def user_posts_page(
+    request: Request,
+    user_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(models.User).where(models.User.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    result = await db.execute(
+        select(models.Post)
+        .options(selectinload(models.Post.author))
+        .where(models.Post.user_id == user_id),
+    )
+    posts = result.scalars().all()
+    return templates.TemplateResponse(
+        request,
+        "user_posts.html",
+        {"posts": posts, "user": user, "title": f"{user.username}'s Posts"},
+    )
 
 
 @app.exception_handler(StarletteHTTPException)
