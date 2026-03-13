@@ -18,7 +18,7 @@ from auth import (
 )
 from config import settings
 from database import get_db
-from image_utils import delete_profile_image, process_profile_image
+from image_upload_utils import delete_profile_image, process_profile_image
 from schemas import (
     PaginatedPostsResponse,
     PostResponse,
