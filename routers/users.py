@@ -310,7 +310,5 @@ async def delete_user_picture(
     current_user.image_file = None
     await db.commit()
     await db.refresh(current_user)
-
     delete_profile_image(old_filename)
-
     return current_user
