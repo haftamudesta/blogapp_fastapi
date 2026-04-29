@@ -7,7 +7,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
     )
-    database_url: str
+    database_url: str # pydantic settings will automatically read database_url from .env file
 
     secret_key: SecretStr
     algorithm: str = "HS256"
