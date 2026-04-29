@@ -69,7 +69,6 @@ async def db_session(
 @pytest.fixture
 async def client(
     db_session: AsyncSession,
-    mocked_aws,
 ) -> AsyncGenerator[AsyncClient]:
 
     async def override_get_db():
@@ -85,7 +84,7 @@ async def client(
 
     app.dependency_overrides.clear()
 
-    async def create_test_user(
+async def create_test_user(
     client: AsyncClient,
     username: str = "testuser",
     email: str = "test@example.com",
