@@ -91,7 +91,7 @@ async def client(
     email: str = "test@example.com",
     password: str = "testpassword123",
 ) -> dict:
-    response = await client.post(
+     response = await client.post(
         "/api/users",
         json={
             "username": username,
@@ -99,8 +99,8 @@ async def client(
             "password": password,
         },
     )
-    assert response.status_code == 201, f"Failed to create user: {response.text}"
-    return response.json()
+     assert response.status_code == 201, f"Failed to create user: {response.text}"
+     return response.json()
 
 
 async def login_user(
