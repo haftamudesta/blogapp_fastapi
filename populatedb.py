@@ -1,4 +1,10 @@
 import asyncio
+import selectors
+
+if hasattr(asyncio, 'WindowsSelectorEventLoopPolicy'):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -7,7 +13,7 @@ from sqlalchemy import delete, select, update
 
 import models
 from database import AsyncSessionLocal, engine
-from image_upload_utils import PROFILE_PICS_DIR
+from image_utils import PROFILE_PICS_DIR
 from main import app
 
 POPULATE_IMAGES_DIR = Path("populate_images")
@@ -15,8 +21,8 @@ POPULATE_IMAGES_DIR = Path("populate_images")
 USERS = [
     {
         "username": "HaftamuDesta",
-        "email": "CoreyMSchafer@gmail.com",
-        "password": "TestPassword1!",
+        "email": "haftamudesta@gmail.com",
+        "password": "Haftamudesta@54321",
         "image": "haftamu.jpg",
     },
     {
@@ -243,6 +249,7 @@ async def clear_existing_data() -> None:
 
     # Clear database tables (order respects foreign keys)
     async with AsyncSessionLocal() as db:
+        await db.execute(delete(models.PasswordResetToken))
         await db.execute(delete(models.Post))
         await db.execute(delete(models.User))
         await db.commit()
