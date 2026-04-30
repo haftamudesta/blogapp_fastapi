@@ -1,4 +1,7 @@
 from logging.config import fileConfig
+import asyncio
+import sys
+import warnings
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -8,6 +11,11 @@ import models  # noqa: F401
 from alembic import context
 from config import settings
 from database import Base
+
+if sys.platform == "win32":
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
