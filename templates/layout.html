@@ -10,8 +10,8 @@
     {% else %}
     <title>FastAPI Blog</title>
     {% endif %}
-    <meta name="description" content="FastAPI Tutorial">
-    <meta name="author" content="Corey Schafer">
+    <meta name="description" content="FastAPI App">
+    <meta name="author" content="Haftamu Desta">
     <!-- Open Graph Tags: The title of the page for social media sharing. It can match the title tag or be more descriptive. -->
     <meta property="og:title" content="FastAPI Blog">
     <!-- Open Graph Tags: Typically set to "website" for static sites or "article" for content-heavy pages. -->
@@ -103,15 +103,91 @@
                 {% endblock content %}
             </div>
             <aside class="col-md-4">
+                <div class="content-section py-3 px-4 mb-4 bg-body-tertiary rounded-3">
+                    <div class="text-center mb-3">
+                        <div class="mx-auto mb-3"
+                            style="width: 70px; height: 70px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                            <img src="{{ url_for('static', path='populate_images/haftamu.jpg') }}" alt="Haftamu Desta"
+                                style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
+                        </div>
+                        <h3 class="h4 mb-2">👨‍💻 Haftamu Desta</h3>
+                        <p class="text-body-secondary small">Full-Stack Developer + Electrical Engineer</p>
+                    </div>
+            
+                    <div class="border-top pt-3 mt-2">
+                        <p class="mb-3">
+                            Passionate developer specializing in building modern web applications
+                            with <strong>Node.js, Ruby, Ruby on Rails, JavaScript, Python, FastAPI,
+                                Express, React, Socket.IO, Microservices, PostgreSQL, MongoDB, Redux,
+                                Zustand, and Angular</strong>. I love creating elegant solutions to
+                            complex problems and sharing knowledge through code.
+                        </p>
+            
+                        <div class="contact-info">
+                            <div class="mb-2 d-flex align-items-center">
+                                <span class="me-2">📧</span>
+                                <a href="mailto:desta451616@hotmail.com" class="text-decoration-none">
+                                    desta451616@hotmail.com
+                                </a>
+                            </div>
+                            <div class="mb-3 d-flex align-items-center">
+                                <span class="me-2">📱</span>
+                                <a href="tel:+2510915574522" class="text-decoration-none">
+                                    +251 0915 574522
+                                </a>
+                            </div>
+                        </div>
+            
+                        <div class="social-links d-flex justify-content-center gap-3 mt-3">
+                            <a href="#" class="text-decoration-none" target="_blank">
+                                <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" width="20"
+                                    height="20" style="opacity: 0.75; transition: transform 0.2s ease;">
+                            </a>
+                            <a href="#" class="text-decoration-none" target="_blank">
+                                <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/linkedin.svg" alt="LinkedIn" width="20"
+                                    height="20" style="opacity: 0.75; transition: transform 0.2s ease;">
+                            </a>
+                            <a href="#" class="text-decoration-none" target="_blank">
+                                <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg" alt="X" width="20" height="20"
+                                    style="opacity: 0.75; transition: transform 0.2s ease;">
+                            </a>
+                            <a href="#" class="text-decoration-none" target="_blank">
+                                <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/medium.svg" alt="Medium" width="20"
+                                    height="20" style="opacity: 0.75; transition: transform 0.2s ease;">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Quick Links Section -->
                 <div class="content-section py-3 px-4 mb-4">
-                    <h3>Do You have any Feedback?</h3>
-                    <p class="text-body-secondary">I am Glad to hear from you!!!</p>
-                    <ul class="list-group">
-                        <li class="list-group-item">Latest Posts</li>
-                        <li class="list-group-item">Announcements</li>
-                        <li class="list-group-item">Calendars</li>
-                        <li class="list-group-item">etc</li>
+                    <h4 class="h5 mb-3">🔗 Quick Links</h4>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <a href="#" class="text-decoration-none">📝 Latest Posts</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="text-decoration-none">📢 Announcements</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="text-decoration-none">📅 Events & Calendars</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="text-decoration-none">💬 Feedback & Support</a>
+                        </li>
                     </ul>
+                </div>
+            
+                <!-- Connect Section -->
+                <div class="content-section py-3 px-4">
+                    <h4 class="h5 mb-3">🤝 Let's Connect</h4>
+                    <p class="small text-body-secondary mb-2">
+                        Have questions, suggestions, or just want to say hello?
+                        I'd love to hear from you!
+                    </p>
+                    <button class="btn btn-primary btn-sm w-100" onclick="window.location.href='mailto:desta451616@hotmail.com'">
+                        ✉️ Send a Message
+                    </button>
                 </div>
             </aside>
         </div>
@@ -305,6 +381,7 @@
             }
         });
     </script>
+
     {% block scripts %}
     {% endblock scripts %}
 </body>

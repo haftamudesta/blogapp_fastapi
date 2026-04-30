@@ -292,3 +292,49 @@ a.article-title:focus {
 .modal-header.bg-danger .modal-title {
   color: #ffffff !important;
 }
+
+
+
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+}
+
+/* Fallback if image doesn't load */
+.avatar-circle .profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.contact-info a {
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.contact-info a:hover {
+  opacity: 0.7;
+}
+
+.social-links img {
+  transition: transform 0.2s ease;
+}
+
+.social-links img:hover {
+  transform: translateY(-2px);
+}
