@@ -48,7 +48,6 @@ async def health_check(db: Annotated[AsyncSession, Depends(get_db)]):
         ) from exc
     return {"status": "healthy"}
 
-
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
 async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
