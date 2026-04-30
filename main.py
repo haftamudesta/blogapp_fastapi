@@ -18,6 +18,7 @@ import models
 from config import settings
 from database import engine, get_db
 from routers import posts, users
+import os
 
 
 @asynccontextmanager
@@ -29,7 +30,14 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Ensure directories exist
+os.makedirs("media/profile_pics", exist_ok=True)
+os.makedirs("static", exist_ok=True)
+
+# Mount static directories
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
+app.mount("/populate_images", StaticFiles(directory="populate_images"), name="populate_images")
 
 templates = Jinja2Templates(directory="templates")
 
