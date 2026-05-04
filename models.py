@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text,UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -65,6 +65,23 @@ class Post(Base):
         secondary="post_likes",
         back_populates="liked_posts",
     )
+
+
+class PostLike(Base):
+    __tablename__ = "post_likes"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+    )
+    
+    __table_args__ = (
+        UniqueConstraint('user_id', 'post_id', name='unique_user_post_like'),
+    )
+
 
 
 class PasswordResetToken(Base):
