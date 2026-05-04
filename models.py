@@ -58,9 +58,13 @@ class Post(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
     )
-    likes: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    likes_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     author: Mapped[User] = relationship(back_populates="posts")
+    liked_by: Mapped[list[User]] = relationship(
+        secondary="post_likes",
+        back_populates="liked_posts",
+    )
 
 
 class PasswordResetToken(Base):
