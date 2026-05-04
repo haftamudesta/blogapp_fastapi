@@ -31,6 +31,11 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    liked_posts: Mapped[list[Post]] = relationship(
+        secondary="post_likes",
+        back_populates="liked_by",
+    )
+
     @property
     def image_path(self) -> str:
         if self.image_file:
