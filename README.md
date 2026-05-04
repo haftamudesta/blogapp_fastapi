@@ -43,8 +43,6 @@
 
 ### Tech Stack <a name="tech-stack"></a>
 
-## 🛠️ Tech Stack
-
 <details>
   <summary>🎨 Frontend</summary>
   <ul>
