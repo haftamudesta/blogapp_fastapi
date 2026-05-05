@@ -8,7 +8,7 @@ import models
 from auth import CurrentUser
 from schemas import LikeResponse
 
-router = APIRouter(prefix="/api/posts", tags=["likes"])
+router = APIRouter()
 
 
 @router.post("/{post_id}/like", response_model=LikeResponse)
