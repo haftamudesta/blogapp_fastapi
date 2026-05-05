@@ -35,6 +35,11 @@ class User(Base):
         secondary="post_likes",
         back_populates="liked_by",
     )
+
+    comments: Mapped[list[Comment]] = relationship(
+        back_populates="author",
+        cascade="all, delete-orphan",
+    )
     
 
     @property
