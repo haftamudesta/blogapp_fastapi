@@ -1,35 +1,47 @@
 {% extends "layout.html" %}
 {% block content %}
 <h1 class="mb-4">Posts by {{ user.username }}</h1>
-{% for post in posts %}
-<article class="content-section py-3 px-4 mb-4" data-post-id="{{ post.id }}">
-    <div class="d-flex align-items-start gap-4">
-        <img class="rounded-circle article-img flex-shrink-0" src="{{ post.author.image_path }}"
-            alt="{{ post.author.username }}'s profile picture" width="64" height="64" loading="lazy">
-        <div class="flex-grow-1">
-            <div class="article-metadata mb-2">
-                <a class="me-2" href="{{ url_for('user_posts', user_id=post.author.id) }}">{{ post.author.username
-                    }}</a>
-                <small class="text-body-secondary">{{ post.date_posted.strftime("%B %d, %Y") }}</small>
-            </div>
-            <h2>
-                <a class="article-title" href="{{ url_for('post_page', post_id=post.id) }}">{{ post.title }}</a>
-            </h2>
-            <p class="article-content">{{ post.content }}</p>
-            <div class="like-section d-flex align-items-center gap-2 mt-3">
-                <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="{{ post.id }}"
-                    data-liked="{{ 'true' if post.is_liked_by_current_user else 'false' }}">
-                    <span class="like-icon">{% if post.is_liked_by_current_user %}❤️{% else %}🤍{% endif %}</span>
-                    <span class="like-count">{{ post.likes_count }}</span>
-                </button>
-                <span class="text-muted small">likes</span>
+<div id="postsContainer">
+    {% for post in posts %}
+    <article class="content-section py-3 px-4 mb-4" data-post-id="{{ post.id }}">
+        <div class="d-flex align-items-start gap-4">
+            <img class="rounded-circle article-img flex-shrink-0" src="{{ post.author.image_path }}"
+                alt="{{ post.author.username }}'s profile picture" width="64" height="64" loading="lazy">
+            <div class="flex-grow-1">
+                <div class="article-metadata mb-2">
+                    <a class="me-2" href="{{ url_for('user_posts', user_id=post.author.id) }}">{{ post.author.username
+                        }}</a>
+                    <small class="text-body-secondary">{{ post.date_posted.strftime("%B %d, %Y") }}</small>
+                </div>
+                <h2>
+                    <a class="article-title" href="{{ url_for('post_page', post_id=post.id) }}">{{ post.title }}</a>
+                </h2>
+                <p class="article-content">{{ post.content }}</p>
+                <div class="like-section d-flex align-items-center gap-2 mt-3">
+                    <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="{{ post.id }}"
+                        data-liked="{{ 'true' if post.is_liked_by_current_user else 'false' }}">
+                        <span class="like-icon">{% if post.is_liked_by_current_user %}❤️{% else %}🤍{% endif %}</span>
+                        <span class="like-count">{{ post.likes_count }}</span>
+                    </button>
+                    <span class="text-muted small">likes</span>
+                </div>
             </div>
         </div>
-    </div>
-</article>
-{% else %}
-<p class="text-body-secondary">No posts by this user yet.</p>
-{% endfor %}
+    </article>
+    {% else %}
+    <p class="text-body-secondary">No posts by this user yet.</p>
+    {% endfor %}
+</div>
+{% if has_more %}
+<div class="text-center mb-4">
+    <button type="button" class="btn btn-outline-primary" id="loadMoreBtn">Load More Posts</button>
+</div>
+{% endif %}
+
+<script>
+    // Pass user_id to JavaScript for pagination
+    const CURRENT_USER_ID = {{ user.id }};
+</script>
 {% endblock content %}
 
 {% block scripts %}
@@ -45,13 +57,15 @@
             return;
         }
 
-        const isLiked = button.getAttribute('data-liked') === 'true';
-        const method = isLiked ? 'DELETE' : 'POST';
+        // Get current state BEFORE making the request
+        const isCurrentlyLiked = button.getAttribute('data-liked') === 'true';
+
+        // Determine method based on current state
+        const method = isCurrentlyLiked ? 'DELETE' : 'POST';
         const url = `/api/posts/${postId}/like`;
 
-        // Disable button while processing to prevent double clicks
+        // Disable button while processing
         button.disabled = true;
-        const originalText = button.innerHTML;
 
         try {
             const response = await fetch(url, {
@@ -67,78 +81,202 @@
                 return;
             }
 
-            if (response.status === 404) {
-                console.error('Like endpoint not found');
-                const errorMessageEl = document.getElementById('errorMessage');
-                if (errorMessageEl) {
-                    errorMessageEl.textContent = 'Like functionality is not available. Please try again later.';
-                    showModal('errorModal');
-                }
-                return;
-            }
-
             if (response.ok) {
                 const data = await response.json();
 
-                // Update button state
-                const newLiked = !isLiked;
-                button.setAttribute('data-liked', newLiked.toString());
+                // Update button state based on server response
+                button.setAttribute('data-liked', data.liked.toString());
 
                 // Update icon
                 const iconSpan = button.querySelector('.like-icon');
-                iconSpan.textContent = newLiked ? '❤️' : '🤍';
+                iconSpan.textContent = data.liked ? '❤️' : '🤍';
 
                 // Update count
                 const countSpan = button.querySelector('.like-count');
                 countSpan.textContent = data.likes_count;
 
-                // Add/remove liked class for styling
-                if (newLiked) {
-                    button.classList.add('liked');
-                } else {
-                    button.classList.remove('liked');
-                }
+                console.log(`Post ${postId} - Action: ${method}, New state: ${data.liked}, Count: ${data.likes_count}`);
+            } else if (response.status === 400) {
+                const error = await response.json();
+                console.error('Like error:', error.detail);
+                // Force refresh the like status from server
+                await forceRefreshLikeStatus(postId, button);
             } else {
-                const error = await response.json().catch(() => ({ detail: 'Failed to process like' }));
-                console.error('Like error:', error);
-
-                const errorMessageEl = document.getElementById('errorMessage');
-                if (errorMessageEl) {
-                    errorMessageEl.textContent = error.detail || 'Failed to process like';
-                    showModal('errorModal');
-                }
+                throw new Error('Failed to process like');
             }
         } catch (error) {
             console.error('Error:', error);
             const errorMessageEl = document.getElementById('errorMessage');
             if (errorMessageEl) {
-                errorMessageEl.textContent = 'Network error. Please check your connection.';
+                errorMessageEl.textContent = 'Failed to process like. Please try again.';
                 showModal('errorModal');
             }
         } finally {
-            // Re-enable button
             button.disabled = false;
+        }
+    }
+
+    // Force refresh like status from server
+    async function forceRefreshLikeStatus(postId, button) {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/likes`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Force update based on server data
+                button.setAttribute('data-liked', data.liked.toString());
+                const iconSpan = button.querySelector('.like-icon');
+                iconSpan.textContent = data.liked ? '❤️' : '🤍';
+                const countSpan = button.querySelector('.like-count');
+                countSpan.textContent = data.likes_count;
+
+                console.log(`Force refreshed post ${postId} - Liked: ${data.liked}, Count: ${data.likes_count}`);
+            }
+        } catch (error) {
+            console.error('Error refreshing like status:', error);
         }
     }
 
     function likeClickHandler(event) {
         event.preventDefault();
+        event.stopPropagation();
         const button = event.currentTarget;
         const postId = parseInt(button.getAttribute('data-post-id'));
         handleLike(postId, button);
     }
 
-    // Attach event listeners to all like buttons
     function attachLikeListeners() {
         const likeButtons = document.querySelectorAll('.like-btn');
         likeButtons.forEach(button => {
-            // Remove existing listener to avoid duplicates
             button.removeEventListener('click', likeClickHandler);
             button.addEventListener('click', likeClickHandler);
+
+            // Debug: Log initial state
+            const postId = button.getAttribute('data-post-id');
+            const isLiked = button.getAttribute('data-liked') === 'true';
+            console.log(`Button for post ${postId} initialized with liked=${isLiked}`);
         });
     }
 
     // Initial attachment
     attachLikeListeners();
+
+    // Pagination - only if load more button exists
+    let currentOffset = {{ limit }};
+    const limit = {{ limit }};
+    let hasMore = {{ 'true' if has_more else 'false' }};
+
+    const postsContainer = document.getElementById('postsContainer');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    function createPostHTML(post) {
+        const isLiked = post.is_liked_by_current_user === true;
+        const likeIcon = isLiked ? '❤️' : '🤍';
+
+        return `
+            <article class="content-section py-3 px-4 mb-4" data-post-id="${post.id}">
+                <div class="d-flex align-items-start gap-4">
+                    <img class="rounded-circle article-img flex-shrink-0" src="${escapeHtml(post.author.image_path)}" 
+                         alt="${escapeHtml(post.author.username)}'s profile picture" width="64" height="64" loading="lazy">
+                    <div class="flex-grow-1">
+                        <div class="article-metadata mb-2">
+                            <a class="me-2" href="/users/${post.author.id}/posts">${escapeHtml(post.author.username)}</a>
+                            <small class="text-body-secondary">${formatDate(post.date_posted)}</small>
+                        </div>
+                        <h2>
+                            <a class="article-title" href="/posts/${post.id}">${escapeHtml(post.title)}</a>
+                        </h2>
+                        <p class="article-content">${escapeHtml(post.content)}</p>
+                        <div class="like-section d-flex align-items-center gap-2">
+                            <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="${post.id}" 
+                                    data-liked="${isLiked}">
+                                <span class="like-icon">${likeIcon}</span>
+                                <span class="like-count">${post.likes_count || 0}</span>
+                            </button>
+                            <span class="text-muted small">likes</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function (m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    async function loadMorePosts() {
+        if (!hasMore) return;
+
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+
+        try {
+            const token = getToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`/api/users/${CURRENT_USER_ID}/posts?skip=${currentOffset}&limit=${limit}`, { headers });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch posts');
+            }
+
+            const data = await response.json();
+
+            for (const post of data.posts) {
+                postsContainer.insertAdjacentHTML('beforeend', createPostHTML(post));
+            }
+
+            currentOffset += data.posts.length;
+            hasMore = data.has_more;
+
+            if (!hasMore && loadMoreBtn) {
+                loadMoreBtn.classList.add('d-none');
+            }
+
+            attachLikeListeners();
+
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            loadMoreBtn.textContent = 'Error - Click to Retry';
+            loadMoreBtn.disabled = false;
+            return;
+        }
+
+        if (hasMore) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load More Posts';
+        }
+    }
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMorePosts);
+    }
 </script>
 {% endblock scripts %}
