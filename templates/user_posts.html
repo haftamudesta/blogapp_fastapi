@@ -2,7 +2,7 @@
 {% block content %}
 <h1 class="mb-4">Posts by {{ user.username }}</h1>
 {% for post in posts %}
-<article class="content-section py-3 px-4 mb-4">
+<article class="content-section py-3 px-4 mb-4" data-post-id="{{ post.id }}">
     <div class="d-flex align-items-start gap-4">
         <img class="rounded-circle article-img flex-shrink-0" src="{{ post.author.image_path }}"
             alt="{{ post.author.username }}'s profile picture" width="64" height="64" loading="lazy">
@@ -16,6 +16,14 @@
                 <a class="article-title" href="{{ url_for('post_page', post_id=post.id) }}">{{ post.title }}</a>
             </h2>
             <p class="article-content">{{ post.content }}</p>
+            <div class="like-section d-flex align-items-center gap-2 mt-3">
+                <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="{{ post.id }}"
+                    data-liked="{{ 'true' if post.is_liked_by_current_user else 'false' }}">
+                    <span class="like-icon">{% if post.is_liked_by_current_user %}❤️{% else %}🤍{% endif %}</span>
+                    <span class="like-count">{{ post.likes_count }}</span>
+                </button>
+                <span class="text-muted small">likes</span>
+            </div>
         </div>
     </div>
 </article>
@@ -23,3 +31,114 @@
 <p class="text-body-secondary">No posts by this user yet.</p>
 {% endfor %}
 {% endblock content %}
+
+{% block scripts %}
+<script type="module">
+    import { getToken } from '/static/js/auth.js';
+    import { showModal } from '/static/js/utils.js';
+
+    async function handleLike(postId, button) {
+        const token = getToken();
+
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const isLiked = button.getAttribute('data-liked') === 'true';
+        const method = isLiked ? 'DELETE' : 'POST';
+        const url = `/api/posts/${postId}/like`;
+
+        // Disable button while processing to prevent double clicks
+        button.disabled = true;
+        const originalText = button.innerHTML;
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (response.status === 404) {
+                console.error('Like endpoint not found');
+                const errorMessageEl = document.getElementById('errorMessage');
+                if (errorMessageEl) {
+                    errorMessageEl.textContent = 'Like functionality is not available. Please try again later.';
+                    showModal('errorModal');
+                }
+                return;
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Update button state
+                const newLiked = !isLiked;
+                button.setAttribute('data-liked', newLiked.toString());
+
+                // Update icon
+                const iconSpan = button.querySelector('.like-icon');
+                iconSpan.textContent = newLiked ? '❤️' : '🤍';
+
+                // Update count
+                const countSpan = button.querySelector('.like-count');
+                countSpan.textContent = data.likes_count;
+
+                // Add/remove liked class for styling
+                if (newLiked) {
+                    button.classList.add('liked');
+                } else {
+                    button.classList.remove('liked');
+                }
+            } else {
+                const error = await response.json().catch(() => ({ detail: 'Failed to process like' }));
+                console.error('Like error:', error);
+
+                const errorMessageEl = document.getElementById('errorMessage');
+                if (errorMessageEl) {
+                    errorMessageEl.textContent = error.detail || 'Failed to process like';
+                    showModal('errorModal');
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            const errorMessageEl = document.getElementById('errorMessage');
+            if (errorMessageEl) {
+                errorMessageEl.textContent = 'Network error. Please check your connection.';
+                showModal('errorModal');
+            }
+        } finally {
+            // Re-enable button
+            button.disabled = false;
+        }
+    }
+
+    function likeClickHandler(event) {
+        event.preventDefault();
+        const button = event.currentTarget;
+        const postId = parseInt(button.getAttribute('data-post-id'));
+        handleLike(postId, button);
+    }
+
+    // Attach event listeners to all like buttons
+    function attachLikeListeners() {
+        const likeButtons = document.querySelectorAll('.like-btn');
+        likeButtons.forEach(button => {
+            // Remove existing listener to avoid duplicates
+            button.removeEventListener('click', likeClickHandler);
+            button.addEventListener('click', likeClickHandler);
+        });
+    }
+
+    // Initial attachment
+    attachLikeListeners();
+</script>
+{% endblock scripts %}
