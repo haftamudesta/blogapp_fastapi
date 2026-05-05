@@ -55,7 +55,9 @@ class PostResponse(PostBase):
     id: int
     user_id: int
     date_posted: datetime
+    likes_count: int
     author: UserPublic
+    is_liked_by_current_user: bool = False
 
 
 class PaginatedPostsResponse(BaseModel):
@@ -78,3 +80,8 @@ class ResetPasswordRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8)
+
+class LikeResponse(BaseModel):
+    post_id: int
+    liked: bool
+    likes_count: int

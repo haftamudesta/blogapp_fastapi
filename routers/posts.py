@@ -6,10 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import models
-from auth import CurrentUser
+from auth import get_current_user
 from config import settings
 from database import get_db
-from schemas import PaginatedPostsResponse, PostCreate, PostResponse, PostUpdate
+from schemas import (
+    LikeResponse,
+    PaginatedPostsResponse,
+    PostCreate,
+    PostResponse,
+    PostUpdate,
+)
 
 router = APIRouter()
 
@@ -19,11 +25,13 @@ async def get_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
+    current_user = Depends(get_current_user),
 ):
-
+    # Get total count
     count_result = await db.execute(select(func.count()).select_from(models.Post))
     total = count_result.scalar() or 0
 
+    # Get posts
     result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
@@ -35,8 +43,25 @@ async def get_posts(
 
     has_more = skip + len(posts) < total
 
+    # Get like status for current user
+    posts_data = []
+    for post in posts:
+        post_dict = PostResponse.model_validate(post)
+        
+        # Check if current user liked this post
+        like_result = await db.execute(
+            select(models.PostLike).where(
+                models.PostLike.user_id == current_user.id,
+                models.PostLike.post_id == post.id,
+            )
+        )
+        is_liked = like_result.scalar_one_or_none() is not None
+        post_dict.is_liked_by_current_user = is_liked
+        
+        posts_data.append(post_dict)
+
     return PaginatedPostsResponse(
-        posts=[PostResponse.model_validate(post) for post in posts],
+        posts=posts_data,
         total=total,
         skip=skip,
         limit=limit,
@@ -51,39 +76,181 @@ async def get_posts(
 )
 async def create_post(
     post: PostCreate,
-    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
 ):
     new_post = models.Post(
         title=post.title,
         content=post.content,
         user_id=current_user.id,
+        likes_count=0,
     )
     db.add(new_post)
     await db.commit()
     await db.refresh(new_post, attribute_names=["author"])
-    return new_post
+    
+    # Set is_liked_by_current_user to False for new post
+    post_response = PostResponse.model_validate(new_post)
+    post_response.is_liked_by_current_user = False
+    return post_response
 
 
 @router.get("/{post_id}", response_model=PostResponse)
-async def get_post(post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def get_post(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
     result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.id == post_id),
     )
     post = result.scalars().first()
-    if post:
-        return post
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    
+    # Check if current user liked this post
+    post_response = PostResponse.model_validate(post)
+    like_result = await db.execute(
+        select(models.PostLike).where(
+            models.PostLike.user_id == current_user.id,
+            models.PostLike.post_id == post_id,
+        )
+    )
+    is_liked = like_result.scalar_one_or_none() is not None
+    post_response.is_liked_by_current_user = is_liked
+    
+    return post_response
+
+
+@router.post("/{post_id}/like", response_model=LikeResponse)
+async def like_post(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
+    """Like a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+    
+    # Check if already liked
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
+    )
+    result = await db.execute(stmt)
+    existing_like = result.scalar_one_or_none()
+    
+    if existing_like:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already liked this post",
+        )
+    
+    # Create like
+    like = models.PostLike(user_id=current_user.id, post_id=post_id)
+    db.add(like)
+    
+    # Increment likes count
+    post.likes_count += 1
+    
+    await db.commit()
+    await db.refresh(post)
+    
+    return LikeResponse(
+        post_id=post_id,
+        liked=True,
+        likes_count=post.likes_count,
+    )
+
+
+@router.delete("/{post_id}/like", response_model=LikeResponse)
+async def unlike_post(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
+    """Unlike a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+    
+    # Check if like exists
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
+    )
+    result = await db.execute(stmt)
+    like = result.scalar_one_or_none()
+    
+    if not like:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You haven't liked this post",
+        )
+    
+    # Delete like
+    await db.delete(like)
+    
+    # Decrement likes count
+    post.likes_count -= 1
+    
+    await db.commit()
+    await db.refresh(post)
+    
+    return LikeResponse(
+        post_id=post_id,
+        liked=False,
+        likes_count=post.likes_count,
+    )
+
+
+@router.get("/{post_id}/likes", response_model=LikeResponse)
+async def get_post_like_status(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
+    """Get like status for a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+    
+    # Check if user liked the post
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
+    )
+    result = await db.execute(stmt)
+    liked = result.scalar_one_or_none() is not None
+    
+    return LikeResponse(
+        post_id=post_id,
+        liked=liked,
+        likes_count=post.likes_count,
+    )
 
 
 @router.put("/{post_id}", response_model=PostResponse)
 async def update_post_full(
     post_id: int,
     post_data: PostCreate,
-    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
 ):
     result = await db.execute(select(models.Post).where(models.Post.id == post_id))
     post = result.scalars().first()
@@ -104,15 +271,18 @@ async def update_post_full(
 
     await db.commit()
     await db.refresh(post, attribute_names=["author"])
-    return post
+    
+    post_response = PostResponse.model_validate(post)
+    post_response.is_liked_by_current_user = False
+    return post_response
 
 
 @router.patch("/{post_id}", response_model=PostResponse)
 async def update_post_partial(
     post_id: int,
     post_data: PostUpdate,
-    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
 ):
     result = await db.execute(select(models.Post).where(models.Post.id == post_id))
     post = result.scalars().first()
@@ -134,14 +304,17 @@ async def update_post_partial(
 
     await db.commit()
     await db.refresh(post, attribute_names=["author"])
-    return post
+    
+    post_response = PostResponse.model_validate(post)
+    post_response.is_liked_by_current_user = False
+    return post_response
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: int,
-    current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
 ):
     result = await db.execute(select(models.Post).where(models.Post.id == post_id))
     post = result.scalars().first()
@@ -157,5 +330,9 @@ async def delete_post(
             detail="Not authorized to delete this post",
         )
 
+    # Delete associated likes
+    await db.execute(
+        select(models.PostLike).where(models.PostLike.post_id == post_id)
+    )
     await db.delete(post)
     await db.commit()

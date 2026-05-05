@@ -18,7 +18,16 @@
                 <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
                     data-bs-target="#deleteModal">Delete Post</button>
             </div>
+            <div class="like-section d-flex align-items-center gap-2 mt-3">
+                <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="{{ post.id }}"
+                    data-liked="{{ 'true' if post.is_liked_by_current_user else 'false' }}">
+                    <span class="like-icon">{% if post.is_liked_by_current_user %}❤️{% else %}🤍{% endif %}</span>
+                    <span class="like-count">{{ post.likes_count }}</span>
+                </button>
+                <span class="text-muted small">likes</span>
+            </div>
         </div>
+        
     </div>
 </article>
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">

@@ -2,7 +2,7 @@
 {% block content %}
 <div id="postsContainer">
     {% for post in posts %}
-    <article class="content-section py-3 px-4 mb-4">
+    <article class="content-section py-3 px-4 mb-4" data-post-id="{{ post.id }}">
         <div class="d-flex align-items-start gap-4">
             <img class="rounded-circle article-img flex-shrink-0" src="{{ post.author.image_path }}"
                 alt="{{ post.author.username }}'s profile picture" width="64" height="64" loading="lazy">
@@ -16,6 +16,14 @@
                     <a class="article-title" href="{{ url_for('post_page', post_id=post.id) }}">{{ post.title }}</a>
                 </h2>
                 <p class="article-content">{{ post.content }}</p>
+                <div class="like-section d-flex align-items-center gap-2">
+                    <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="{{ post.id }}"
+                        data-liked="{{ 'true' if post.is_liked_by_current_user else 'false' }}">
+                        <span class="like-icon">{% if post.is_liked_by_current_user %}❤️{% else %}🤍{% endif %}</span>
+                        <span class="like-count">{{ post.likes_count }}</span>
+                    </button>
+                    <span class="text-muted small">likes</span>
+                </div>
             </div>
         </div>
     </article>
@@ -27,49 +35,222 @@
 </div>
 {% endif %}
 {% endblock content %}
+
 {% block scripts %}
 <script type="module">
-    import { escapeHtml, formatDate } from '/static/js/utils.js';
+    import { getToken } from '/static/js/auth.js';
+    import { showModal } from '/static/js/utils.js';
 
-    // Pagination state - initialized from server-rendered values
-    let currentOffset = {{ limit }};  // Start after server-rendered posts
+    // Like functionality
+    async function handleLike(postId, button) {
+        const token = getToken();
+
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        // Get current like status BEFORE making the request
+        const isLiked = button.getAttribute('data-liked') === 'true';
+        const method = isLiked ? 'DELETE' : 'POST';
+        const url = `/api/posts/${postId}/like`;
+
+        // Disable button temporarily to prevent double clicks
+        button.disabled = true;
+        const originalText = button.innerHTML;
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Update button state based on response
+                const newLiked = data.liked;
+                button.setAttribute('data-liked', newLiked.toString());
+
+                // Update icon
+                const iconSpan = button.querySelector('.like-icon');
+                iconSpan.textContent = newLiked ? '❤️' : '🤍';
+
+                // Update count
+                const countSpan = button.querySelector('.like-count');
+                countSpan.textContent = data.likes_count;
+
+                // Add/remove liked class
+                if (newLiked) {
+                    button.classList.add('liked');
+                } else {
+                    button.classList.remove('liked');
+                }
+
+                console.log(`Post ${postId} - Liked: ${newLiked}, Count: ${data.likes_count}`);
+            } else if (response.status === 400) {
+                const error = await response.json();
+                console.error('Like error:', error.detail);
+                // Refresh the like status from server to sync UI
+                await refreshLikeStatus(postId, button);
+            } else {
+                throw new Error('Failed to process like');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            const errorMessageEl = document.getElementById('errorMessage');
+            if (errorMessageEl) {
+                errorMessageEl.textContent = 'Failed to process like. Please try again.';
+                showModal('errorModal');
+            }
+        } finally {
+            // Re-enable button
+            button.disabled = false;
+        }
+    }
+
+    // Refresh like status from server
+    async function refreshLikeStatus(postId, button) {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/likes`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Update button state based on server response
+                button.setAttribute('data-liked', data.liked.toString());
+
+                // Update icon
+                const iconSpan = button.querySelector('.like-icon');
+                iconSpan.textContent = data.liked ? '❤️' : '🤍';
+
+                // Update count
+                const countSpan = button.querySelector('.like-count');
+                countSpan.textContent = data.likes_count;
+
+                // Add/remove liked class
+                if (data.liked) {
+                    button.classList.add('liked');
+                } else {
+                    button.classList.remove('liked');
+                }
+
+                console.log(`Refreshed post ${postId} - Liked: ${data.liked}, Count: ${data.likes_count}`);
+            }
+        } catch (error) {
+            console.error('Error refreshing like status:', error);
+        }
+    }
+
+    // Attach event listeners to all like buttons
+    function attachLikeListeners() {
+        const likeButtons = document.querySelectorAll('.like-btn');
+        likeButtons.forEach(button => {
+            // Remove existing listener to avoid duplicates
+            button.removeEventListener('click', likeClickHandler);
+            button.addEventListener('click', likeClickHandler);
+        });
+    }
+
+    function likeClickHandler(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const button = event.currentTarget;
+        const postId = parseInt(button.getAttribute('data-post-id'));
+        handleLike(postId, button);
+    }
+
+    // Initial attachment
+    attachLikeListeners();
+
+    // Pagination state
+    let currentOffset = {{ limit }};
     const limit = {{ limit }};
     let hasMore = {{ 'true' if has_more else 'false' }};
 
     const postsContainer = document.getElementById('postsContainer');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
 
-    // Create HTML for a single post (matching server-rendered structure)
     function createPostHTML(post) {
+        const isLiked = post.is_liked_by_current_user === true;
+        const likeIcon = isLiked ? '❤️' : '🤍';
+
         return `
-      <article class="content-section py-3 px-4 mb-4">
-        <div class="d-flex align-items-start gap-4">
-          <img class="rounded-circle article-img flex-shrink-0" src="${escapeHtml(post.author.image_path)}" alt="${escapeHtml(post.author.username)}'s profile picture" width="64" height="64" loading="lazy">
-          <div class="flex-grow-1">
-            <div class="article-metadata mb-2">
-              <a class="me-2" href="/users/${post.author.id}/posts">${escapeHtml(post.author.username)}</a>
-              <small class="text-body-secondary">${formatDate(post.date_posted)}</small>
-            </div>
-            <h2>
-              <a class="article-title" href="/posts/${post.id}">${escapeHtml(post.title)}</a>
-            </h2>
-            <p class="article-content">${escapeHtml(post.content)}</p>
-          </div>
-        </div>
-      </article>
-    `;
+            <article class="content-section py-3 px-4 mb-4" data-post-id="${post.id}">
+                <div class="d-flex align-items-start gap-4">
+                    <img class="rounded-circle article-img flex-shrink-0" src="${escapeHtml(post.author.image_path)}" 
+                         alt="${escapeHtml(post.author.username)}'s profile picture" width="64" height="64" loading="lazy">
+                    <div class="flex-grow-1">
+                        <div class="article-metadata mb-2">
+                            <a class="me-2" href="/users/${post.author.id}/posts">${escapeHtml(post.author.username)}</a>
+                            <small class="text-body-secondary">${formatDate(post.date_posted)}</small>
+                        </div>
+                        <h2>
+                            <a class="article-title" href="/posts/${post.id}">${escapeHtml(post.title)}</a>
+                        </h2>
+                        <p class="article-content">${escapeHtml(post.content)}</p>
+                        <div class="like-section d-flex align-items-center gap-2">
+                            <button class="like-btn btn btn-sm btn-outline-danger" data-post-id="${post.id}" 
+                                    data-liked="${isLiked}">
+                                <span class="like-icon">${likeIcon}</span>
+                                <span class="like-count">${post.likes_count || 0}</span>
+                            </button>
+                            <span class="text-muted small">likes</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        `;
     }
 
-    // Load more posts from the API
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function (m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
     async function loadMorePosts() {
-        // Disable button and show loading state
+        if (!hasMore) return;
+
         loadMoreBtn.disabled = true;
         loadMoreBtn.textContent = 'Loading...';
 
-        let errorOccurred = false;
-
         try {
-            const response = await fetch(`/api/posts?skip=${currentOffset}&limit=${limit}`);
+            const token = getToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`/api/posts?skip=${currentOffset}&limit=${limit}`, { headers });
 
             if (!response.ok) {
                 throw new Error('Failed to fetch posts');
@@ -77,34 +258,33 @@
 
             const data = await response.json();
 
-            // Append new posts to the container
             for (const post of data.posts) {
                 postsContainer.insertAdjacentHTML('beforeend', createPostHTML(post));
             }
 
-            // Update pagination state
             currentOffset += data.posts.length;
             hasMore = data.has_more;
 
-            if (!hasMore) {
+            if (!hasMore && loadMoreBtn) {
                 loadMoreBtn.classList.add('d-none');
             }
+
+            // Attach event listeners to new like buttons
+            attachLikeListeners();
+
         } catch (error) {
-            errorOccurred = true;
             console.error('Error loading posts:', error);
-            // Show error message and keep button enabled for retry
             loadMoreBtn.textContent = 'Error - Click to Retry';
             loadMoreBtn.disabled = false;
-        } finally {
-            // Re-enable button and reset text only if no error occurred
-            if (!errorOccurred && hasMore) {
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = 'Load More Posts';
-            }
+            return;
+        }
+
+        if (hasMore) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load More Posts';
         }
     }
 
-    // Add click handler if button exists
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', loadMorePosts);
     }

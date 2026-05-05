@@ -261,6 +261,7 @@ async def get_user_posts(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
+    current_user = Depends(get_current_user),  # Add current_user dependency
 ):
     result = await db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
@@ -289,8 +290,25 @@ async def get_user_posts(
 
     has_more = skip + len(posts) < total
 
+    # Get like status for current user
+    posts_data = []
+    for post in posts:
+        post_dict = PostResponse.model_validate(post)
+        
+        # Check if current user liked this post
+        like_result = await db.execute(
+            select(models.PostLike).where(
+                models.PostLike.user_id == current_user.id,
+                models.PostLike.post_id == post.id,
+            )
+        )
+        is_liked = like_result.scalar_one_or_none() is not None
+        post_dict.is_liked_by_current_user = is_liked
+        
+        posts_data.append(post_dict)
+
     return PaginatedPostsResponse(
-        posts=[PostResponse.model_validate(post) for post in posts],
+        posts=posts_data,
         total=total,
         skip=skip,
         limit=limit,
