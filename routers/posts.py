@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -9,7 +9,13 @@ import models
 from auth import get_current_user
 from config import settings
 from database import get_db
-from schemas import PaginatedPostsResponse, PostCreate, PostResponse, PostUpdate
+from schemas import (
+    LikeResponse,
+    PaginatedPostsResponse,
+    PostCreate,
+    PostResponse,
+    PostUpdate,
+)
 
 router = APIRouter()
 
@@ -21,9 +27,11 @@ async def get_posts(
     limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
     current_user = Depends(get_current_user),
 ):
+    # Get total count
     count_result = await db.execute(select(func.count()).select_from(models.Post))
     total = count_result.scalar() or 0
 
+    # Get posts
     result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
@@ -59,6 +67,7 @@ async def get_posts(
         limit=limit,
         has_more=has_more,
     )
+
 
 @router.post(
     "",
@@ -113,6 +122,127 @@ async def get_post(
     post_response.is_liked_by_current_user = is_liked
     
     return post_response
+
+
+@router.post("/{post_id}/like", response_model=LikeResponse)
+async def like_post(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
+    """Like a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+    
+    # Check if already liked
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
+    )
+    result = await db.execute(stmt)
+    existing_like = result.scalar_one_or_none()
+    
+    if existing_like:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already liked this post",
+        )
+    
+    # Create like
+    like = models.PostLike(user_id=current_user.id, post_id=post_id)
+    db.add(like)
+    
+    # Increment likes count
+    post.likes_count += 1
+    
+    await db.commit()
+    await db.refresh(post)
+    
+    return LikeResponse(
+        post_id=post_id,
+        liked=True,
+        likes_count=post.likes_count,
+    )
+
+
+@router.delete("/{post_id}/like", response_model=LikeResponse)
+async def unlike_post(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
+    """Unlike a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+    
+    # Check if like exists
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
+    )
+    result = await db.execute(stmt)
+    like = result.scalar_one_or_none()
+    
+    if not like:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You haven't liked this post",
+        )
+    
+    # Delete like
+    await db.delete(like)
+    
+    # Decrement likes count
+    post.likes_count -= 1
+    
+    await db.commit()
+    await db.refresh(post)
+    
+    return LikeResponse(
+        post_id=post_id,
+        liked=False,
+        likes_count=post.likes_count,
+    )
+
+
+@router.get("/{post_id}/likes", response_model=LikeResponse)
+async def get_post_like_status(
+    post_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user = Depends(get_current_user),
+):
+    """Get like status for a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found",
+        )
+    
+    # Check if user liked the post
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
+    )
+    result = await db.execute(stmt)
+    liked = result.scalar_one_or_none() is not None
+    
+    return LikeResponse(
+        post_id=post_id,
+        liked=liked,
+        likes_count=post.likes_count,
+    )
 
 
 @router.put("/{post_id}", response_model=PostResponse)

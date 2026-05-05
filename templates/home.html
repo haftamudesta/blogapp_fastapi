@@ -50,15 +50,21 @@
             return;
         }
 
+        // Get current like status BEFORE making the request
         const isLiked = button.getAttribute('data-liked') === 'true';
         const method = isLiked ? 'DELETE' : 'POST';
         const url = `/api/posts/${postId}/like`;
+
+        // Disable button temporarily to prevent double clicks
+        button.disabled = true;
+        const originalText = button.innerHTML;
 
         try {
             const response = await fetch(url, {
                 method: method,
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
             });
 
@@ -70,8 +76,8 @@
             if (response.ok) {
                 const data = await response.json();
 
-                // Update button state
-                const newLiked = !isLiked;
+                // Update button state based on response
+                const newLiked = data.liked;
                 button.setAttribute('data-liked', newLiked.toString());
 
                 // Update icon
@@ -88,17 +94,66 @@
                 } else {
                     button.classList.remove('liked');
                 }
+
+                console.log(`Post ${postId} - Liked: ${newLiked}, Count: ${data.likes_count}`);
             } else if (response.status === 400) {
                 const error = await response.json();
                 console.error('Like error:', error.detail);
+                // Refresh the like status from server to sync UI
+                await refreshLikeStatus(postId, button);
             } else {
                 throw new Error('Failed to process like');
             }
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('errorMessage').textContent =
-                'Failed to process like. Please try again.';
-            showModal('errorModal');
+            const errorMessageEl = document.getElementById('errorMessage');
+            if (errorMessageEl) {
+                errorMessageEl.textContent = 'Failed to process like. Please try again.';
+                showModal('errorModal');
+            }
+        } finally {
+            // Re-enable button
+            button.disabled = false;
+        }
+    }
+
+    // Refresh like status from server
+    async function refreshLikeStatus(postId, button) {
+        const token = getToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/likes`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Update button state based on server response
+                button.setAttribute('data-liked', data.liked.toString());
+
+                // Update icon
+                const iconSpan = button.querySelector('.like-icon');
+                iconSpan.textContent = data.liked ? '❤️' : '🤍';
+
+                // Update count
+                const countSpan = button.querySelector('.like-count');
+                countSpan.textContent = data.likes_count;
+
+                // Add/remove liked class
+                if (data.liked) {
+                    button.classList.add('liked');
+                } else {
+                    button.classList.remove('liked');
+                }
+
+                console.log(`Refreshed post ${postId} - Liked: ${data.liked}, Count: ${data.likes_count}`);
+            }
+        } catch (error) {
+            console.error('Error refreshing like status:', error);
         }
     }
 
@@ -114,6 +169,7 @@
 
     function likeClickHandler(event) {
         event.preventDefault();
+        event.stopPropagation();
         const button = event.currentTarget;
         const postId = parseInt(button.getAttribute('data-post-id'));
         handleLike(postId, button);
@@ -131,7 +187,7 @@
     const loadMoreBtn = document.getElementById('loadMoreBtn');
 
     function createPostHTML(post) {
-        const isLiked = post.is_liked_by_current_user || false;
+        const isLiked = post.is_liked_by_current_user === true;
         const likeIcon = isLiked ? '❤️' : '🤍';
 
         return `
