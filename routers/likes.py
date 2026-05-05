@@ -1,31 +1,35 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from models import Post, PostLike, User
-from schemas import LikeResponse
+import models
 from auth import CurrentUser
+from schemas import LikeResponse
 
-router = APIRouter()
+router = APIRouter(prefix="/api/posts", tags=["likes"])
 
 
 @router.post("/{post_id}/like", response_model=LikeResponse)
 async def like_post(
     post_id: int,
-    current_user: User = Depends(CurrentUser),
-    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    post = await db.get(Post, post_id)
+    """Like a post"""
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
     
-    stmt = select(PostLike).where(
-        PostLike.user_id == current_user.id,
-        PostLike.post_id == post_id,
+    # Check if already liked
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
     )
     result = await db.execute(stmt)
     existing_like = result.scalar_one_or_none()
@@ -36,7 +40,8 @@ async def like_post(
             detail="You have already liked this post",
         )
     
-    like = PostLike(user_id=current_user.id, post_id=post_id)
+    # Create like
+    like = models.PostLike(user_id=current_user.id, post_id=post_id)
     db.add(like)
     
     post.likes_count += 1
@@ -53,20 +58,22 @@ async def like_post(
 @router.delete("/{post_id}/like", response_model=LikeResponse)
 async def unlike_post(
     post_id: int,
-    current_user: User = Depends(CurrentUser),
-    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Unlike a post"""
-    post = await db.get(Post, post_id)
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
     
-    stmt = select(PostLike).where(
-        PostLike.user_id == current_user.id,
-        PostLike.post_id == post_id,
+    # Check if like exists
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
     )
     result = await db.execute(stmt)
     like = result.scalar_one_or_none()
@@ -93,20 +100,22 @@ async def unlike_post(
 @router.get("/{post_id}/likes", response_model=LikeResponse)
 async def get_post_like_status(
     post_id: int,
-    current_user: User = Depends(CurrentUser),
-    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Get like status for a post"""
-    post = await db.get(Post, post_id)
+    # Check if post exists
+    post = await db.get(models.Post, post_id)
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found",
         )
     
-    stmt = select(PostLike).where(
-        PostLike.user_id == current_user.id,
-        PostLike.post_id == post_id,
+    # Check if user liked the post
+    stmt = select(models.PostLike).where(
+        models.PostLike.user_id == current_user.id,
+        models.PostLike.post_id == post_id,
     )
     result = await db.execute(stmt)
     liked = result.scalar_one_or_none() is not None
