@@ -60,7 +60,6 @@ async def get_posts(
         has_more=has_more,
     )
 
-
 @router.post(
     "",
     response_model=PostResponse,
