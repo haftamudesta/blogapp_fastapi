@@ -57,180 +57,265 @@ USERS = [
     },
 ]
 
-POSTS = [
+# Electrical Engineering - Power System Protection Posts (Older posts)
+ELECTRICAL_POSTS = [
     {
-        "title": "Why I Love FastAPI",
-        "content": "FastAPI has completely changed how I build APIs. The automatic documentation, type hints, and async support make development so much faster. Plus, the performance is incredible!",
+        "title": "Introduction to Power System Protection: Safeguarding Electrical Networks",
+        "content": "Power system protection is critical for maintaining grid reliability and equipment safety. Protection systems detect faults (short circuits, overloads, ground faults) and isolate affected sections. Key components include circuit breakers, relays (electromechanical, solid-state, and microprocessor-based), current transformers (CTs), voltage transformers (VTs), and communication networks. Modern protection uses IEC 61850 for substation automation."
     },
     {
-        "title": "Corey Schafer Has the Best YouTube Tutorials!",
-        "content": "This was written by a viewer and definitely not by me... I mean him. Totally not written by him, but by me... a real viewer. Seriously, check out his channel for amazing Python content.",
+        "title": "Overcurrent Protection: Coordination and Time Grading",
+        "content": "Overcurrent protection is the most common protection scheme for distribution systems. Inverse Definite Minimum Time (IDMT) relays have characteristic curves (standard inverse, very inverse, extremely inverse) enabling coordination. Time grading ensures the downstream relay operates first. Directional overcurrent relays detect fault direction, essential for ring mains and parallel feeders. Proper coordination prevents unnecessary outages."
     },
     {
-        "title": "Async/Await Finally Clicked",
-        "content": "I've been struggling with async programming for months, but FastAPI's approach finally made it click. Using 'async def' for endpoints and 'await' for database calls just makes sense.",
+        "title": "Differential Protection: The Gold Standard for Transformers and Buses",
+        "content": "Differential protection compares currents entering and leaving protected equipment. Under normal conditions, currents cancel out. During internal faults, imbalance triggers tripping. Percentage differential relays add restraint winding to prevent misoperation during external faults with CT saturation. Transformer differential protection must account for phase shift, tap changers, and magnetizing inrush (harmonic restraint). Bus differential protects against bus faults with high-speed clearance (2-4 cycles)."
     },
     {
-        "title": "Schafer? I Barely Know Her!",
-        "content": "Is anyone actually reading these blog posts? Do they really need to say anything? I can keep going all day. At least AI can... Claude, keep going, please.",
+        "title": "Distance Protection: Securing Transmission Lines",
+        "content": "Distance protection measures impedance to estimate fault location. Zones include Zone 1 (instantaneous, 80-90% of line), Zone 2 (time-delayed, 120% of line), and Zone 3 (remote backup). Mho characteristics are common for transmission lines. Quadrilateral characteristics suit lines with high resistance faults. Communication-aided schemes (PERMISSIVE OVERREACH, BLOCKING, UNBLOCKING) enable high-speed tripping for end-zone faults. Power swing blocking prevents tripping during stable power oscillations."
     },
     {
-        "title": "Pydantic Validation is Magic",
-        "content": "The way Pydantic handles validation in FastAPI is incredible. Define your model with type hints, and boom - automatic validation, serialization, and documentation. No more writing validation code by hand!",
+        "title": "Generator Protection: Preserving Critical Assets",
+        "content": "Generators require comprehensive protection due to their value and impact on grid stability. Stator differential protects against phase-to-phase faults. Stator ground fault protection (95% and 100% schemes) detects winding ground faults. Loss of excitation protection prevents generator damage from field failure. Negative sequence current protection (phase unbalance) limits rotor heating. Overexcitation (V/Hz) prevents core saturation. Loss of synchronism (out-of-step) protection trips during sustained instability."
     },
     {
-        "title": "From Flask to FastAPI",
-        "content": "I made the switch from Flask to FastAPI last month. The learning curve was minimal, and the benefits are huge. Automatic OpenAPI docs, better performance, and native async support. No regrets!",
-    },
-    {
-        "title": "Some of My Favorite Horror Movies",
-        "content": "I love horror movies and practical effects. One of my favorites is 'The Thing'. Hereditary is a great modern one, but most people have seen it. One modern one I really liked that not as many people have seen is 'The Night House'. It's a slow burn but really effective. More psychological than jump-scare based.",
-    },
-    {
-        "title": "Type Hints Changed My Life",
-        "content": "I used to think type hints were just extra typing (pun intended). But after using FastAPI, I see how they enable incredible tooling - better autocomplete, automatic validation, and self-documenting code.",
-    },
-    {
-        "title": "The Power of Dependency Injection",
-        "content": "FastAPI's dependency injection system is so elegant. Need a database session? Just add it as a parameter. Need the current user? Same thing. It makes the code so clean and testable.",
-    },
-    {
-        "title": "SQLAlchemy 2.0 Is Worth the Upgrade",
-        "content": "If you're still using SQLAlchemy 1.x patterns, it's time to upgrade. The new 2.0 style with select() and mapped_column() is much more explicit and works beautifully with async.",
-    },
-    {
-        "title": "Hot Take: Python > JavaScript for APIs",
-        "content": "Yes, I said it. For backend APIs, Python with FastAPI beats Node.js. Fight me in the comments. (Just kidding, this blog doesn't have comments... yet.)",
-    },
-    {
-        "title": "Understanding HTTP Status Codes",
-        "content": "200 OK, 201 Created, 400 Bad Request, 404 Not Found, 500 Internal Server Error. Learn these codes - they're how your API communicates with the world. FastAPI makes it easy to return the right ones.",
-    },
-    {
-        "title": "Some of My Favorite Video Games",
-        "content": "The one I probably play the most, but not my favorite, is League of Legends... It's a love/hate relationship. If you play, you get it. My favorites are all single-player RPGs. The Elder Scrolls series (Especially Morrowind and Skyrim) were awesome. The Baldur's Gate series took up a lot of my time as a kid, and more recently, the 3rd one was great. Speaking of Baldur's Gate, I love that old isometric style of RPG, so I looked for more modern equivalents and found Pillars of Eternity, which was fantastic. Also both Pathfinder: Kingmaker and Wrath of the Righteous were a lot of fun as well.",
-    },
-    {
-        "title": "JWT Authentication Demystified",
-        "content": "JSON Web Tokens seemed scary at first, but they're actually pretty simple. Encode some user data, sign it with a secret, and use it to verify requests. FastAPI + PyJWT makes it straightforward.",
-    },
-    {
-        "title": "Tips for API Design",
-        "content": "Use nouns for resources (/users, /posts), HTTP verbs for actions (GET, POST, PUT, DELETE), and return consistent responses. FastAPI's response_model helps enforce this consistency.",
-    },
-    {
-        "title": "Path Parameters vs Query Parameters",
-        "content": "Use path parameters for required resource identifiers (/users/123) and query parameters for optional filters (/posts?author=corey&limit=10). FastAPI handles both beautifully with automatic validation.",
-    },
-    {
-        "title": "Error Handling Done Right",
-        "content": "Don't just return 500 for everything! Use HTTPException to return meaningful status codes and messages. Your API consumers will thank you when debugging issues.",
-    },
-    {
-        "title": "Why I Switched to UV",
-        "content": "UV is blazingly fast for Python package management. Install packages in milliseconds instead of minutes. If you haven't tried it yet, you're missing out!",
-    },
-    {
-        "title": "What About Favorite Books?",
-        "content": "I don't read a lot of fiction. The last fiction book I read was 'The Martian' by Andy Weir, which I really enjoyed. But most of my reading is non-fiction. Some of my favorites are 'Meditations' by Marcus Aurelius, 'Conscious' by Annaka Harris, 'How to Die' by Seneca, and 'The Last Lecture' by Randy Pausch. The latest fiction book I'm reading through (and have been for a while) is 'House of Leaves' by Mark Z. Danielewski. It's... different, but awesome.",
-    },
-    {
-        "title": "Testing FastAPI Applications",
-        "content": "FastAPI's TestClient makes testing a breeze. Write tests for your endpoints, mock dependencies, and catch bugs before they hit production. Your future self will thank you.",
-    },
-    {
-        "title": "Environment Variables and Security",
-        "content": "Never hardcode secrets! Use environment variables and pydantic-settings to keep your API keys, database URLs, and JWT secrets safe. It's Security 101.",
-    },
-    {
-        "title": "CORS: The Bane of Frontend Devs",
-        "content": "Getting CORS errors? FastAPI's CORSMiddleware is your friend. Just remember: be specific about allowed origins in production. Don't use '*' unless you really mean it.",
-    },
-    {
-        "title": "Async Database Queries",
-        "content": "Blocking database calls in async code? That's a performance killer. Use async drivers like psycopg (for PostgreSQL) or aiosqlite to keep your event loop happy.",
-    },
-    {
-        "title": "The Beauty of Response Models",
-        "content": "Response models aren't just for documentation - they filter out sensitive fields automatically. Define what goes out, and Pydantic handles the rest.",
-    },
-    {
-        "title": "Let's Talk Board Games",
-        "content": "I love Settlers of Catan. It's a classic for a reason. I'm actually going to make a sword in my woodshop soon that will be my friend group's trophy for the annual Catan champion that we're going to call 'The Katana of Catan'. One thing I've always wanted to do, but never have, is play an in-person Dungeons & Dragons campaign. I've played so many D&D inspired video games, but never the real deal. Hopefully someday...",
-    },
-    {
-        "title": "API Versioning Strategies",
-        "content": "APIs evolve. Version them from day one! Whether you use URL prefixes (/v1/users) or headers, plan for change. Breaking changes without versioning breaks trust.",
-    },
-    {
-        "title": "Background Tasks in FastAPI",
-        "content": "Don't make users wait for emails to send or files to process. FastAPI's BackgroundTasks lets you return immediately while work continues in the background.",
-    },
-    {
-        "title": "Rate Limiting Your API",
-        "content": "Protect your API from abuse with rate limiting. Too many requests? Return 429 Too Many Requests. Your server (and your wallet) will thank you.",
-    },
-    {
-        "title": "Documentation That Writes Itself",
-        "content": "Add docstrings to your endpoints and they appear in Swagger UI. Add examples to your Pydantic models and they show up too. Documentation has never been this easy.",
-    },
-    {
-        "title": "WebSockets with FastAPI",
-        "content": "REST isn't the only game in town. FastAPI supports WebSockets for real-time communication. Chat apps, live updates, notifications - all possible!",
-    },
-    {
-        "title": "Favorite Hobbies, You Ask?",
-        "content": "Woodworking, hands down. I love making things with wood, but I wish I had more time for it. There's something special about making something with your own hands, with materials that are local. A lot of the stuff I've built came from trees that fell on my family's property. My stuff might not always be as good as something you buy in a store, but there's a story and a connection there that makes it better than anything I could buy elsewhere.",
-    },
-    {
-        "title": "Custom Validators in Pydantic",
-        "content": "Need validation beyond type checking? Pydantic's field_validator and model_validator decorators let you add custom logic. Validate emails, check password strength, whatever you need.",
-    },
-    {
-        "title": "The ORM vs Raw SQL Debate",
-        "content": "ORMs like SQLAlchemy add abstraction but can hide performance issues. Know when to use the ORM and when to drop to raw SQL. Both have their place.",
-    },
-    {
-        "title": "Debugging Async Code",
-        "content": "Async bugs can be tricky. Use logging liberally, understand the event loop, and don't mix sync and async without care. asyncio.run() is your entry point.",
-    },
-    {
-        "title": "Containerizing FastAPI Apps",
-        "content": "Docker + FastAPI = deployment bliss. Create a Dockerfile, build your image, and deploy anywhere. Consistency across environments is priceless.",
-    },
-    {
-        "title": "Health Check Endpoints",
-        "content": "Add a /health endpoint to your API. Load balancers and orchestrators need to know if your service is alive. Return 200 if healthy, details if not. I didn't do this in this tutorial, but there's only so much time in a video!",
-    },
-    {
-        "title": "Hmm... What Else?",
-        "content": "I'm running out of ideas for these blog posts. Maybe I should just write about how great FastAPI is... Oh wait, I've already done that multiple times. Well, if you're still reading, thanks for sticking with it! You're awesome.",
-    },
-    {
-        "title": "Pagination: Don't Return Everything",
-        "content": "Returning 10,000 records in one response? Please don't. Implement pagination with limit and offset (or better, cursor-based). Your database and clients will be happier.",
-    },
-    {
-        "title": "OpenAPI Schema Customization",
-        "content": "FastAPI's auto-generated OpenAPI schema is great, but sometimes you need to customize. Add examples, descriptions, and tags to make your docs shine.",
-    },
-    {
-        "title": "Security Headers Matter",
-        "content": "Add security headers to your responses: X-Content-Type-Options, X-Frame-Options, Content-Security-Policy. Small effort, big security improvement.",
-    },
-    {
-        "title": "Caching Strategies",
-        "content": "Not every request needs to hit the database. Use caching with Redis or even in-memory for frequently accessed data. Your response times will plummet (in a good way).",
-    },
-    {
-        "title": "GraphQL vs REST",
-        "content": "GraphQL is trendy, but REST is battle-tested. Choose based on your needs, not hype. FastAPI excels at REST, but Strawberry brings GraphQL if you need it.",
-    },
-    {
-        "title": "Movie Quotes!",
-        "content": "'You wanna know how I did it? This is how I did it, Anton. I never saved anything for the swim back.' - 'Gattaca'. One of my favorite movies of all time. As silly as it sounds, that movie is actually one of the main reasons I decided to pursue an internship at NASA back in college. After that internship, I found I had a craving to learn and do more. It pushed me to take programming more seriously, which eventually led me to where I am today... Which is writing a blog post about FastAPI that's just meant to fill space. TLDR: I watched Gattaca and now I'm writing sample blog posts at 3am on a Saturday for this FastAPI tutorial. And you can too!",
+        "title": "Transformer Protection: From Buchholz to Differential",
+        "content": "Power transformers need multiple protection elements. Buchholz relay detects incipient faults (winding insulation breakdown, core heating) by sensing gas accumulation. Sudden pressure relay trips for rapid pressure rise from internal arcing. Winding temperature monitoring prevents insulation aging. Overload protection limits through-fault duration. Restricted earth fault (REF) provides sensitive ground fault detection within transformer zones. Oil preservation systems (conservator, nitrogen blanket) prevent moisture ingress."
     },
 ]
+
+# Electrical Engineering - Power System Control Posts (Older posts)
+CONTROL_POSTS = [
+    {
+        "title": "SCADA Systems: Monitoring and Control of Power Grids",
+        "content": "SCADA (Supervisory Control and Data Acquisition) enables real-time grid monitoring. Components include Remote Terminal Units (RTUs) field devices, Master Terminal Units (MTUs) central control, Human-Machine Interface (HMI) for operators, communication networks (serial, Ethernet, fiber), and data historians for archiving. Modern SCADA integrates with EMS (Energy Management Systems) for advanced applications like state estimation, contingency analysis, and optimal power flow."
+    },
+    {
+        "title": "Automatic Generation Control (AGC): Balancing Supply and Demand",
+        "content": "AGC maintains frequency and tie-line power flows. Control loops include primary control (governor response, 2-10 seconds), secondary control (Load Frequency Control, 10-60 seconds), and tertiary control (economic dispatch, 5-15 minutes). Area Control Error (ACE) combines frequency and tie-line deviations. Participation factors allocate regulation burden among generating units. Modern AGC incorporates renewable generation forecasting and battery energy storage for faster response."
+    },
+    {
+        "title": "Voltage Control in Power Systems: Reactive Power Management",
+        "content": "Voltage control maintains acceptable voltage profiles throughout the network. Generator excitation systems use Automatic Voltage Regulators (AVRs) for fast response. Transformer tap changers (On-Load Tap Changers - OLTC) provide step voltage adjustment. Capacitor banks supply reactive power locally. Static Var Compensators (SVC) and STATCOM offer dynamic compensation. Synchronous condensers provide inertia and reactive support."
+    },
+    {
+        "title": "Substation Automation Using IEC 61850",
+        "content": "IEC 61850 standardizes substation communication and modeling. GOOSE (Generic Object Oriented Substation Event) messages enable fast peer-to-peer communication for tripping (4ms). Sampled Values (SV) digitize CT/VT measurements. Logical nodes represent functions (XCBR for circuit breaker, TCTR for CT). MMS (Manufacturing Message Specification) handles client-server communication with control centers. Process bus replaces copper wires with fiber optics. Time synchronization using IEEE 1588 (PTP) ensures coordinated operation."
+    },
+    {
+        "title": "Load Shedding and Restoration Strategies",
+        "content": "Under-frequency and under-voltage load shedding prevents system collapse during generation deficits. Shedding steps are prioritized based on load importance. Rate-of-change-of-frequency (ROCOF) relays detect severe disturbances for faster response. Load restoration uses time-graded reconnection preventing cold load pickup issues. Under-frequency load shedding schemes coordinate with generator under-frequency protection."
+    },
+    {
+        "title": "Smart Grid Technologies: Advanced Metering Infrastructure (AMI)",
+        "content": "AMI replaces traditional meter reading with two-way communication. Smart meters provide interval data (15-60 minute readings), outage detection, remote connect/disconnect, voltage monitoring, and power quality measurements. Home Area Networks (HAN) connect consumer devices (thermostats, appliances) for demand response. Meter Data Management Systems (MDMS) process and store massive datasets (billions of reads daily). AMI enables time-of-use rates, prepaid metering, and load disaggregation."
+    },
+    {
+        "title": "Distributed Energy Resources (DER) Integration Challenges",
+        "content": "DERs including solar PV, wind, battery storage, and electric vehicles create grid challenges. Reverse power flows from rooftop solar cause voltage rise and protection coordination issues. High DER penetration reduces system inertia (frequency response risk). Islanding detection (anti-islanding protection) prevents utility worker hazards. Advanced inverters provide voltage support, frequency response, and low/high voltage ride-through. IEEE 1547-2018 standard requires smart inverter functionality."
+    },
+    {
+        "title": "Power System Stabilizers (PSS): Damping Low-Frequency Oscillations",
+        "content": "Inter-area oscillations (0.1-0.8 Hz) limit power transfer capabilities. PSS adds supplementary damping signals to generator excitation systems. Input signals include generator speed, electrical power, or frequency deviation. Lead-lag compensation adjusts phase characteristics. Gain scheduling adapts to operating conditions. Wide-Area Damping Control (WADC) uses PMU measurements for inter-area oscillation damping."
+    },
+    {
+        "title": "Wide-Area Monitoring Systems (WAMS) Using PMU",
+        "content": "Phasor Measurement Units (PMU) provide time-synchronized, high-resolution (30-60 samples/second) voltage and current phasors. GPS time stamping (1 microsecond) enables system-wide comparison. Applications include angle monitoring (detect stress), oscillation detection, state estimation improvement, post-event analysis, and islanding detection. Synchrophasor data enables real-time stability assessment and remedial action schemes (RAS)."
+    },
+    {
+        "title": "Digital Protection Relays: Microprocessor-Based Protection",
+        "content": "Digital relays replaced electromechanical and solid-state designs. Features include multiple protection functions in one device, programmable logic, fault recording (oscillography), event logging, metering (power quality), self-diagnostics, and communication protocols (Modbus, DNP3, IEC 61850). Settings files reduce commissioning time. Adaptive protection changes characteristics based on system conditions. Cybersecurity features (authentication, encryption) protect against malicious commands."
+    },
+    {
+        "title": "High Voltage Direct Current (HVDC) Transmission Control",
+        "content": "HVDC transmits bulk power over long distances efficiently. Line Commutated Converter (LCC) systems use thyristor valves with commutation voltage from AC grid. Voltage Source Converter (VSC) systems use IGBTs offering black-start capability and independent power control. Control modes include constant power, constant current, constant voltage (DC grid), and frequency control. Multi-terminal HVDC grids enable renewable integration (North Sea offshore wind)."
+    },
+    {
+        "title": "Circuit Breaker Technology: Air, SF6, and Vacuum",
+        "content": "Circuit breakers interrupt fault currents by extinguishing arcs. Air circuit breakers (ACB) used for low voltage. SF6 gas circuit breakers dominate medium/high voltage due to excellent arc quenching. Gas handling equipment prevents environmental release (SF6 is potent greenhouse gas). Vacuum circuit breakers (VCB) are common for medium voltage (4.16-38 kV). Operating mechanisms include spring, magnetic actuator, hydraulic, and pneumatic. Condition monitoring measures contact wear, timing, and gas pressure."
+    },
+]
+
+# Additional Technology Posts (Medium age)
+TECH_POSTS = [
+    {
+        "title": "Building GraphQL APIs with Apollo Server",
+        "content": "GraphQL provides client-specified queries over a single endpoint. Apollo Server integrates with Node.js frameworks. Schema Definition Language (SDL) defines types, queries, mutations, and subscriptions. Resolvers implement fetching logic. DataLoader batches and caches database requests. Apollo Client manages state and caching on frontend."
+    },
+    {
+        "title": "Docker Containerization for Developers",
+        "content": "Docker packages applications with dependencies into containers. Dockerfiles define build steps. Images are immutable artifacts. Containers are runtime instances. Docker Compose runs multi-container applications (app, database, cache, queue). Volumes persist data beyond container lifecycle. Container registries (Docker Hub, ECR, ACR) share images across teams."
+    },
+    {
+        "title": "Kubernetes: Production Container Orchestration",
+        "content": "Kubernetes automates container deployment, scaling, and operations. Pods run one or more containers. Services provide stable endpoints and load balancing. Deployments manage rolling updates and rollbacks. Ingress routes external traffic. ConfigMaps and Secrets manage configuration. PersistentVolumes abstract storage. Namespaces isolate environments."
+    },
+    {
+        "title": "Redis: Caching and Message Queuing",
+        "content": "Redis is an in-memory data structure store. Use cases include caching (database query results, API responses), session storage, rate limiting (EXPIRE with INCR), leaderboards (sorted sets), pub/sub messaging, distributed locks (SETNX), and real-time analytics (hyperloglog). Redis Cluster shards data across nodes for scalability."
+    },
+    {
+        "title": "TypeScript: Type-Safe JavaScript",
+        "content": "TypeScript adds static typing to JavaScript. Interfaces define object shapes. Generics create reusable components. Union and intersection types combine existing types. Type narrowing (typeof, instanceof, user-defined guards) improves type safety. Decorators enable meta-programming. The TypeScript compiler (tsc) emits clean JavaScript for any browser or Node version."
+    },
+    {
+        "title": "Web Security: OWASP Top 10 Explained",
+        "content": "Protect against broken access control (RBAC, ABAC), cryptographic failures (bcrypt, HTTPS), injection attacks (parameterized queries, ORMs), insecure design (threat modeling), security misconfiguration (principle of least privilege), vulnerable components (keep dependencies updated), identification failures (strong MFA), and SSRF (validate URLs). Regular OWASP ZAP scans and dependency checks catch common issues."
+    },
+]
+
+# Latest Technology Posts (Python, FastAPI, HTML/CSS, JavaScript, React, Node.js, Ruby, Rails, MongoDB, RabbitMQ, PostgreSQL)
+LATEST_TECH_POSTS = [
+    # Python Posts
+    {
+        "title": "Why Python Remains the King of Programming Languages",
+        "content": "Python continues to dominate the programming world in 2024. Its simple, readable syntax makes it perfect for beginners, while its powerful features attract experts. From web development (Django, FastAPI) to data science (Pandas, NumPy), machine learning (TensorFlow, PyTorch), and automation - Python does it all. The extensive standard library and vibrant community make Python an excellent choice for any project."
+    },
+    {
+        "title": "Python Async/Await: A Complete Guide",
+        "content": "Python's async/await syntax enables concurrent programming without the complexity of threading. Using asyncio, you can write programs that handle thousands of network connections simultaneously. Key concepts include coroutines (async def), tasks (asyncio.create_task), and event loops. Popular async libraries include aiohttp for HTTP requests, asyncpg for PostgreSQL, and FastAPI for web APIs."
+    },
+    {
+        "title": "Python Type Hints: Write Better Code",
+        "content": "Type hints in Python (PEP 484) improve code quality and IDE support. Using typing module features like List, Dict, Optional, Union, and Literal, you can annotate function signatures. Tools like mypy, Pyright, and pydantic validate types at development time. Type hints also enable better autocompletion and documentation generation."
+    },
+    {
+        "title": "Python Generators: Memory-Efficient Processing",
+        "content": "Generators yield values one at a time instead of storing all values in memory. Use 'yield' keyword instead of 'return' to create generators. They're perfect for processing large files, infinite sequences, and data streams. Generator expressions offer a concise syntax similar to list comprehensions but with parentheses instead of brackets."
+    },
+    {
+        "title": "Python Decorators: The Ultimate Guide",
+        "content": "Decorators modify function behavior without changing source code. Use @ syntax to apply decorators to functions and classes. Common use cases include logging, timing, caching (functools.lru_cache), authentication, and rate limiting. Advanced decorators can accept arguments and preserve function metadata using functools.wraps."
+    },
+    
+    # FastAPI Posts
+    {
+        "title": "FastAPI: The Modern Python Web Framework",
+        "content": "FastAPI has revolutionized Python web development with automatic OpenAPI documentation, type validation, and async support. Built on Starlette for web handling and Pydantic for data validation, it's one of the fastest Python frameworks available. Companies like Netflix, Uber, and Microsoft use FastAPI for high-performance APIs."
+    },
+    {
+        "title": "FastAPI Dependency Injection: Master It Today",
+        "content": "FastAPI's dependency injection system promotes clean, testable code. Use Depends() in path operations to inject dependencies like database sessions, authentication, and business logic. Dependencies can be nested, cached, and even async. This pattern reduces code duplication and improves separation of concerns."
+    },
+    {
+        "title": "Building RESTful APIs with FastAPI",
+        "content": "FastAPI makes building REST APIs intuitive. Use HTTP methods (GET, POST, PUT, DELETE), path parameters, query parameters, request bodies, and response models. The framework automatically validates input, serializes output, and generates OpenAPI documentation. Add pagination, filtering, and sorting with simple query parameters."
+    },
+    {
+        "title": "FastAPI WebSockets: Real-Time Communication",
+        "content": "FastAPI supports WebSockets for real-time bidirectional communication. Use WebSocket endpoints with 'async def websocket_endpoint'. Handle connections, receive messages, send responses, and manage disconnections. Perfect for chat applications, live notifications, gaming servers, and collaborative tools."
+    },
+    {
+        "title": "FastAPI Background Tasks & Middleware",
+        "content": "FastAPI's BackgroundTasks allow processing after HTTP responses. Perfect for sending emails, processing images, or logging without blocking users. Middleware runs on every request/response for CORS, security headers, request logging, and rate limiting. Combine these features for robust production applications."
+    },
+    
+    # HTML & CSS Posts
+    {
+        "title": "HTML5: The Structure of the Modern Web",
+        "content": "HTML5 introduced semantic elements like <header>, <nav>, <article>, and <section> improving accessibility and SEO. Native multimedia support with <audio> and <video> tags eliminated the need for Flash. Canvas API enables dynamic graphics, while localStorage and sessionStorage provide client-side storage options."
+    },
+    {
+        "title": "CSS Grid & Flexbox: Layout Mastery",
+        "content": "CSS Grid creates two-dimensional layouts with rows and columns. Flexbox handles one-dimensional layouts (rows or columns). Use Grid for overall page structure and Flexbox for components. Properties like grid-template-areas, justify-content, align-items, and gap simplify responsive design without complex calculations."
+    },
+    {
+        "title": "Modern CSS: Variables, Transitions, and Animations",
+        "content": "CSS custom properties (variables) enable dynamic theming and easier maintenance. Transitions create smooth property changes on hover, focus, or active states. Animations define keyframes for complex sequences. Combine these with transforms (translate, rotate, scale) for interactive, engaging user experiences."
+    },
+    {
+        "title": "Responsive Web Design with CSS Media Queries",
+        "content": "Media queries conditionally apply styles based on viewport width, device orientation, or print preview. Breakpoints target mobile (under 768px), tablet (768-1024px), and desktop (over 1024px). Mobile-first design starts with small screens and adds complexity at larger breakpoints. Use relative units (rem, em, vw, vh) for scalable designs."
+    },
+    
+    # JavaScript Posts
+    {
+        "title": "JavaScript ES6+ Features Every Developer Should Know",
+        "content": "Modern JavaScript includes arrow functions (lexical 'this'), template literals (backticks for embedding expressions), destructuring (extract array/object values), spread/rest operators (...), default parameters, classes (syntactic sugar over prototypes), promises (async/await), and modules (import/export). These features make code more concise and maintainable."
+    },
+    {
+        "title": "JavaScript Async Patterns: Callbacks to Promises to Async/Await",
+        "content": "JavaScript handles async operations through evolution: Callbacks led to 'callback hell'. Promises chain .then() and .catch() methods for better readability. Async/await provides synchronous-looking syntax with try/catch error handling. Understanding the event loop, microtasks, and macrotasks explains how async actually works under the hood."
+    },
+    {
+        "title": "The JavaScript Ecosystem: npm, Webpack, and Babel",
+        "content": "npm manages packages and scripts. Webpack bundles modules for production (code splitting, tree shaking, hot module replacement). Babel transpiles modern JS and JSX/TSX for older browsers. Tools like ESLint (code quality), Prettier (formatting), and Husky (git hooks) automate code maintenance in team projects."
+    },
+    {
+        "title": "JavaScript DOM Manipulation and Events",
+        "content": "The DOM API allows dynamic page updates. Methods like querySelector, createElement, appendChild modify structure. Event listeners (click, submit, input, scroll) respond to user interactions. Event delegation handles dynamic content efficiently. Intersection Observer lazy-loads images and implements infinite scroll."
+    },
+    
+    # React Posts
+    {
+        "title": "React Hooks: useState, useEffect, and Beyond",
+        "content": "Hooks enable state and lifecycle in functional components. useState manages component state. useEffect handles side effects (data fetching, subscriptions, DOM updates). useContext provides global state without prop drilling. useReducer handles complex state logic. Custom hooks extract and reuse stateful logic across components."
+    },
+    {
+        "title": "React Component Patterns: Higher-Order Components vs Render Props vs Hooks",
+        "content": "Component patterns share logic across components. Higher-Order Components (HOC) wrap components returning enhanced versions. Render props pass functions as props for dynamic rendering. Hooks now supersede both patterns for most use cases. Choose based on complexity: hooks for simple logic, HOCs for cross-cutting concerns, render props for flexible rendering."
+    },
+    {
+        "title": "React State Management: Context API vs Redux vs Zustand",
+        "content": "Context API works for simple global state like themes and auth. Redux offers predictable state updates with actions, reducers, and store. Redux Toolkit simplifies setup with slices and createAsyncThunk. Zustand provides minimal boilerplate with atomic selectors and middleware. Choose based on app complexity and team preference."
+    },
+    {
+        "title": "React Performance Optimization Techniques",
+        "content": "Optimize React apps with React.memo (prevents unnecessary re-renders), useMemo (memoizes expensive calculations), useCallback (memoizes functions), lazy loading (code splitting with React.lazy + Suspense), virtualization (react-window for long lists), and avoiding anonymous functions in render props. React DevTools Profiler identifies performance bottlenecks."
+    },
+    
+    # Node.js Posts
+    {
+        "title": "Node.js: JavaScript on the Server",
+        "content": "Node.js runs JavaScript outside browsers using Chrome's V8 engine. Its event-driven, non-blocking architecture excels at I/O-heavy applications like APIs, real-time services, and microservices. The platform includes core modules for file system, HTTP, streaming, crypto, and child processes. NPM ecosystem provides millions of reusable packages."
+    },
+    {
+        "title": "Express.js: The Minimalist Web Framework for Node",
+        "content": "Express provides routing, middleware, and HTTP utilities. Middleware functions execute in request-response cycle for logging, parsing (body-parser), compression, CORS, and static files. Error-handling middleware catches exceptions. Express generator creates project scaffolding. Combine with EJS or Pug for server-rendered templates."
+    },
+    {
+        "title": "Node.js Event Loop: Understanding the Core",
+        "content": "Node's event loop phases include timers (setTimeout/setInterval), pending callbacks (I/O), idle/prepare (internal), poll (retrieve I/O events), check (setImmediate), and close(callbacks). Microtasks (nextTick, promise callbacks) run between phases. Understanding this helps debug asynchronous code and optimize performance."
+    },
+    
+    # Ruby Posts
+    {
+        "title": "Ruby: The Programmer's Best Friend",
+        "content": "Ruby emphasizes developer happiness with elegant syntax and object-oriented purity. Everything including numbers and classes are objects. Blocks provide closures for iteration and callbacks. Mixins via modules enable multiple inheritance. Metaprogramming allows writing code that writes code. Ruby's philosophy of 'least surprise' reduces cognitive load."
+    },
+    {
+        "title": "Ruby Metaprogramming: Write Code That Writes Code",
+        "content": "Ruby's metaprogramming features include method_missing (intercept undefined methods), define_method (dynamic method creation), eval (execute strings as code), and class_eval/instance_eval (open classes). Used in frameworks like Rails for magic like ActiveRecord finders. Powerful but use judiciously to avoid maintenance nightmares."
+    },
+    
+    # Ruby on Rails Posts
+    {
+        "title": "Ruby on Rails: Convention Over Configuration",
+        "content": "Rails optimizes programmer happiness with sensible defaults. MVC architecture separates concerns (models, views, controllers). Active Record ORM maps database tables to Ruby objects. RESTful routing maps HTTP verbs to controller actions. Migrations version control database schema. Scaffolding generates entire CRUD interfaces quickly."
+    },
+    {
+        "title": "Rails Active Record: The ORM That Changed Everything",
+        "content": "Active Record implements the Active Record pattern. Associations (has_many, belongs_to, has_and_belongs_to_many) define relationships. Validations check data before database insertion. Callbacks (before_save, after_commit) hook into object lifecycle. Scopes encapsulate query logic. Eager loading (includes, joins) prevents N+1 queries."
+    },
+    
+    # Database Posts
+    {
+        "title": "PostgreSQL: The World's Most Advanced Open Source Database",
+        "content": "PostgreSQL offers advanced features beyond basic relational databases. JSONB provides document storage with indexing. Full-text search beats LIKE queries. Window functions enable complex analytics. Table inheritance partitions data logically. Foreign data wrappers query other databases. PostGIS adds geospatial capabilities. MVCC ensures high concurrency without read locks."
+    },
+    {
+        "title": "MongoDB: NoSQL for Modern Applications",
+        "content": "MongoDB stores JSON-like documents with dynamic schemas. Key features include sharding (horizontal scaling), aggregation pipeline (complex transformations), geospatial queries (location-based search), text search (indexed content), and change streams (real-time notifications). Use MongoDB when data structures evolve frequently or require massive write scaling."
+    },
+    {
+        "title": "RabbitMQ: Message Brokering for Microservices",
+        "content": "RabbitMQ implements AMQP for reliable message passing between services. Producers publish messages to exchanges (direct, topic, fanout, headers). Consumers subscribe from queues bound to exchanges. Features include message acknowledgments, persistence, dead letter exchanges, and clustering. Use RabbitMQ for background job processing, service decoupling, or event-driven architectures."
+    },
+]
+
+# Combine all posts: Electrical (oldest) -> Control (older) -> Tech (medium) -> Latest Tech (newest)
+POSTS = ELECTRICAL_POSTS + CONTROL_POSTS + TECH_POSTS + LATEST_TECH_POSTS
 
 # The 44th post - always the oldest (easter egg for pagination tutorial)
 POST_44 = {
@@ -249,11 +334,35 @@ async def clear_existing_data() -> None:
 
     # Clear database tables (order respects foreign keys)
     async with AsyncSessionLocal() as db:
-        await db.execute(delete(models.PasswordResetToken))
-        await db.execute(delete(models.Post))
-        await db.execute(delete(models.User))
-        await db.commit()
-    print("Cleared existing data")
+        try:
+            # Delete in correct order to avoid foreign key violations
+            # 1. Delete likes (depend on posts)
+            await db.execute(delete(models.PostLike))
+            print("  Deleted post likes")
+            
+            # 2. Delete comments (depend on posts)
+            await db.execute(delete(models.Comment))
+            print("  Deleted comments")
+            
+            # 3. Delete posts (depend on users)
+            await db.execute(delete(models.Post))
+            print("  Deleted posts")
+            
+            # 4. Delete password reset tokens (depend on users)
+            await db.execute(delete(models.PasswordResetToken))
+            print("  Deleted password reset tokens")
+            
+            # 5. Finally delete users
+            await db.execute(delete(models.User))
+            print("  Deleted users")
+            
+            await db.commit()
+            print("Cleared existing data")
+            
+        except Exception as e:
+            await db.rollback()
+            print(f"Error clearing data: {e}")
+            raise
 
 
 async def update_post_dates() -> None:
@@ -356,8 +465,8 @@ async def populate() -> None:
         response.raise_for_status()
         print(f"  Created: '{POST_44['title']}'")
 
-        # Create remaining posts in reverse (last in list = oldest, first = newest)
-        for i, post_data in enumerate(reversed(POSTS)):
+        # Create remaining posts (Electrical posts first, then Control, then Tech, then Latest Tech)
+        for i, post_data in enumerate(POSTS):
             user = users[i % len(users)]
             response = await client.post(
                 "/api/posts",
