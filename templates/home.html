@@ -57,7 +57,6 @@
 
         // Disable button temporarily to prevent double clicks
         button.disabled = true;
-        const originalText = button.innerHTML;
 
         try {
             const response = await fetch(url, {
@@ -251,6 +250,12 @@
             }
 
             const response = await fetch(`/api/posts?skip=${currentOffset}&limit=${limit}`, { headers });
+
+            // Handle 401 Unauthorized - redirect to login
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error('Failed to fetch posts');
