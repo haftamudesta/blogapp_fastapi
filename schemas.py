@@ -49,6 +49,29 @@ class PostUpdate(BaseModel):
     content: str | None = Field(default=None, min_length=1)
 
 
+class CommentBase(BaseModel):
+    content: str = Field(min_length=1, max_length=1000)
+
+
+class CommentCreate(CommentBase):
+    pass
+
+
+class CommentUpdate(BaseModel):
+    content: str = Field(min_length=1, max_length=1000)
+
+class CommentResponse(CommentBase):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    user_id: int
+    post_id: int
+    created_at: datetime
+    updated_at: datetime
+    author: UserPublic
+
+
+
 class PostResponse(PostBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -58,6 +81,9 @@ class PostResponse(PostBase):
     likes_count: int
     author: UserPublic
     is_liked_by_current_user: bool = False
+    comments_count: int = 0
+    comments: list[CommentResponse] = []
+
 
 
 class PaginatedPostsResponse(BaseModel):
@@ -66,6 +92,9 @@ class PaginatedPostsResponse(BaseModel):
     skip: int
     limit: int
     has_more: bool
+
+
+
 
 
 class ForgotPasswordRequest(BaseModel):
