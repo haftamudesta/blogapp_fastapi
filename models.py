@@ -71,6 +71,11 @@ class Post(Base):
         secondary="post_likes",
         back_populates="liked_posts",
     )
+    comments: Mapped[list[Comment]] = relationship(
+        back_populates="post",
+        cascade="all, delete-orphan",
+        order_by="Comment.created_at"
+    )
 
 class Comment(Base):
     __tablename__ = "comments"
