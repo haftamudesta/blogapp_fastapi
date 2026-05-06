@@ -6,7 +6,7 @@
             alt="{{ post.author.username }}'s profile picture" width="64" height="64" loading="lazy">
         <div class="flex-grow-1">
             <div class="article-metadata mb-2">
-                <a class="me-2" href="{{url_for('user_posts', user_id=post.author.id) }}">{{ post.author.username
+                <a class="me-2" href="{{ url_for('user_posts', user_id=post.author.id) }}">{{ post.author.username
                     }}</a>
                 <small class="text-body-secondary">{{ post.date_posted.strftime("%B %d, %Y") }}</small>
             </div>
@@ -25,11 +25,68 @@
                     <span class="like-count">{{ post.likes_count }}</span>
                 </button>
                 <span class="text-muted small">likes</span>
+                <span class="text-muted mx-2">•</span>
+                <span class="text-muted small comment-count">{{ post.comments_count }} comments</span>
             </div>
         </div>
-        
     </div>
 </article>
+
+<!-- Comments Section -->
+<div class="content-section py-3 px-4 mb-4">
+    <h3 class="h5 mb-3">Comments (<span class="comment-count-display">{{ post.comments|length }}</span>)</h3>
+
+    <!-- Add Comment Form -->
+    <div class="mb-4">
+        <form id="commentForm">
+            <div class="mb-3">
+                <label for="commentContent" class="form-label">Add a comment</label>
+                <textarea class="form-control" id="commentContent" name="content" rows="3"
+                    placeholder="Write your comment here..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Comment</button>
+        </form>
+    </div>
+
+    <!-- Comments List -->
+    <div id="commentsList">
+        {% if post.comments and post.comments|length > 0 %}
+        {% for comment in post.comments %}
+        <div class="comment-item border-top pt-3 mt-3" data-comment-id="{{ comment.id }}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="d-flex gap-2 flex-grow-1">
+                    <img class="rounded-circle" src="{{ comment.author.image_path }}"
+                        alt="{{ comment.author.username }}" width="32" height="32" loading="lazy">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <a href="{{ url_for('user_posts', user_id=comment.author.id) }}"
+                                class="fw-bold text-decoration-none">
+                                {{ comment.author.username }}
+                            </a>
+                            <small class="text-body-secondary">{{ comment.created_at.strftime("%B %d, %Y at %I:%M %p")
+                                }}</small>
+                            {% if comment.created_at != comment.updated_at %}
+                            <small class="text-body-secondary fst-italic">(edited)</small>
+                            {% endif %}
+                        </div>
+                        <p class="mt-1 mb-0 comment-content">{{ comment.content }}</p>
+                    </div>
+                </div>
+                <div class="comment-actions ms-2" data-comment-id="{{ comment.id }}"
+                    data-comment-user-id="{{ comment.author.id }}">
+                    <button class="btn btn-sm btn-outline-secondary edit-comment-btn d-none me-1">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger delete-comment-btn d-none">Delete</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-body-secondary text-center py-3" id="noCommentsMsg">No comments yet. Be the first to comment!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit Post Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -59,6 +116,8 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Post Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -69,6 +128,7 @@
             </div>
             <div class="modal-body">
                 <p class="fs-5">Are you sure you want to delete this post? This action cannot be undone.</p>
+                <p class="text-danger">All comments on this post will also be permanently deleted.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -77,16 +137,64 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Comment Modal -->
+<div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCommentModalLabel">Edit Comment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCommentForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editCommentId" name="comment_id">
+                    <div class="mb-3">
+                        <label for="editCommentContent" class="form-label">Content</label>
+                        <textarea class="form-control" id="editCommentContent" name="content" rows="3"
+                            required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Comment Confirmation Modal -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-labelledby="deleteCommentModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteCommentModalLabel">Delete Comment?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fs-5">Are you sure you want to delete this comment? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteComment">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock content %}
+
 {% block scripts %}
 <script type="module">
     import { getCurrentUser, getToken } from '/static/js/auth.js';
-    import { getErrorMessage, showModal, hideModal } from '/static/js/utils.js';
+    import { getErrorMessage, hideModal, showModal } from '/static/js/utils.js';
 
     const postId = {{ post.id }};
     const postUserId = {{ post.user_id }};
 
-    
+    // Check post ownership for edit/delete buttons
     async function checkOwnership() {
         const user = await getCurrentUser();
         if (user && user.id === postUserId) {
@@ -94,92 +202,456 @@
         }
     }
 
-    const editForm = document.getElementById('editPostForm');
-    editForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
+    // Like functionality
+    async function handleLike(postId, button) {
         const token = getToken();
-        if (!token) { window.location.href = '/login'; return; }
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
 
-        const formData = new FormData(editForm);
-        const postData = Object.fromEntries(formData.entries());
-        delete postData.post_id;
+        const isLiked = button.getAttribute('data-liked') === 'true';
+        const method = isLiked ? 'DELETE' : 'POST';
+        const url = `/api/posts/${postId}/like`;
+
+        button.disabled = true;
 
         try {
-            const response = await fetch(`/api/posts/${postId}`, {
-                method: 'PATCH',
+            const response = await fetch(url, {
+                method: method,
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(postData),
             });
 
-            if (response.status === 401) { window.location.href = '/login'; return; }
-            if (response.status === 403) {
-                document.getElementById('errorMessage').textContent =
-                    'You are not authorized to edit this post.';
-                hideModal('editModal');
-                showModal('errorModal');
+            if (response.status === 401) {
+                window.location.href = '/login';
                 return;
             }
 
             if (response.ok) {
-                document.getElementById('successMessage').textContent =
-                    'Post updated successfully!';
-                hideModal('editModal');
-                showModal('successModal');
-
-                document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
-                    window.location.reload();
-                }, { once: true });
-            } else {
-                const error = await response.json();
-                document.getElementById('errorMessage').textContent = getErrorMessage(error);
-                hideModal('editModal');
-                showModal('errorModal');
+                const data = await response.json();
+                const newLiked = data.liked;
+                button.setAttribute('data-liked', newLiked.toString());
+                const iconSpan = button.querySelector('.like-icon');
+                iconSpan.textContent = newLiked ? '❤️' : '🤍';
+                const countSpan = button.querySelector('.like-count');
+                countSpan.textContent = data.likes_count;
             }
         } catch (error) {
-            document.getElementById('errorMessage').textContent =
-                'Network error. Please check your connection and try again.';
-            showModal('errorModal');
+            console.error('Error:', error);
+        } finally {
+            button.disabled = false;
         }
-    });
+    }
 
-    const deleteButton = document.getElementById('confirmDelete');
-    deleteButton.addEventListener('click', async () => {
+    // Comment functionality
+    let currentDeleteCommentId = null;
+
+    async function loadComments() {
         const token = getToken();
-        if (!token) { window.location.href = '/login'; return; }
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
         try {
-            const response = await fetch(`/api/posts/${postId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
+            const response = await fetch(`/api/posts/${postId}/comments?limit=50`, { headers });
+            if (response.ok) {
+                const data = await response.json();
+                renderComments(data.comments);
+                updateCommentCount(data.comments.length);
+            }
+        } catch (error) {
+            console.error('Error loading comments:', error);
+        }
+    }
 
-            if (response.status === 401) { window.location.href = '/login'; return; }
-            if (response.status === 403) {
-                document.getElementById('errorMessage').textContent =
-                    'You are not authorized to delete this post.';
-                hideModal('deleteModal');
+    function updateCommentCount(count) {
+        const countSpans = document.querySelectorAll('.comment-count, .comment-count-display');
+        countSpans.forEach(span => {
+            span.textContent = `${count} ${count === 1 ? 'comment' : 'comments'}`;
+        });
+    }
+
+    function renderComments(comments) {
+        const container = document.getElementById('commentsList');
+        if (!container) return;
+
+        if (comments.length === 0) {
+            container.innerHTML = '<p class="text-body-secondary text-center py-3" id="noCommentsMsg">No comments yet. Be the first to comment!</p>';
+            return;
+        }
+
+        container.innerHTML = comments.map(comment => `
+            <div class="comment-item border-top pt-3 mt-3" data-comment-id="${comment.id}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex gap-2 flex-grow-1">
+                        <img class="rounded-circle" src="${escapeHtml(comment.author.image_path)}" alt="${escapeHtml(comment.author.username)}"
+                             width="32" height="32" loading="lazy">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <a href="/users/${comment.author.id}/posts" class="fw-bold text-decoration-none">
+                                    ${escapeHtml(comment.author.username)}
+                                </a>
+                                <small class="text-body-secondary">${formatDate(comment.created_at)}</small>
+                                ${comment.created_at !== comment.updated_at ? '<small class="text-body-secondary fst-italic">(edited)</small>' : ''}
+                            </div>
+                            <p class="mt-1 mb-0 comment-content">${escapeHtml(comment.content)}</p>
+                        </div>
+                    </div>
+                    <div class="comment-actions ms-2" data-comment-id="${comment.id}" data-comment-user-id="${comment.user_id}">
+                        <button class="btn btn-sm btn-outline-secondary edit-comment-btn d-none me-1">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger delete-comment-btn d-none">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Show edit/delete buttons for user's own comments
+        showCommentActions();
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function (m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    async function showCommentActions() {
+        const user = await getCurrentUser();
+        if (!user) return;
+
+        document.querySelectorAll('.comment-actions').forEach(actions => {
+            const commentUserId = parseInt(actions.getAttribute('data-comment-user-id'));
+            if (commentUserId === user.id) {
+                const editBtn = actions.querySelector('.edit-comment-btn');
+                const deleteBtn = actions.querySelector('.delete-comment-btn');
+                if (editBtn) editBtn.classList.remove('d-none');
+                if (deleteBtn) deleteBtn.classList.remove('d-none');
+            }
+        });
+    }
+
+    // Create comment
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const content = document.getElementById('commentContent').value.trim();
+            if (!content) {
+                document.getElementById('errorMessage').textContent = 'Comment cannot be empty.';
                 showModal('errorModal');
                 return;
             }
 
-            if (response.status === 204) {
-                window.location.href = '/';
-            } else {
-                const error = await response.json();
-                document.getElementById('errorMessage').textContent = getErrorMessage(error);
-                hideModal('deleteModal');
+            const submitBtn = commentForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Posting...';
+
+            try {
+                const response = await fetch(`/api/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ content }),
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.ok) {
+                    document.getElementById('commentContent').value = '';
+                    await loadComments();
+                    document.getElementById('successMessage').textContent = 'Comment posted successfully!';
+                    showModal('successModal');
+                } else {
+                    const error = await response.json();
+                    document.getElementById('errorMessage').textContent = getErrorMessage(error);
+                    showModal('errorModal');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error. Please try again.';
                 showModal('errorModal');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Post Comment';
             }
-        } catch (error) {
-            document.getElementById('errorMessage').textContent =
-                'Network error. Please check your connection and try again.';
-            showModal('errorModal');
+        });
+    }
+
+    // Edit comment
+    document.addEventListener('click', async (event) => {
+        const editBtn = event.target.closest('.edit-comment-btn');
+        if (editBtn) {
+            const commentDiv = editBtn.closest('.comment-item');
+            const commentId = commentDiv?.getAttribute('data-comment-id');
+            const content = commentDiv?.querySelector('.comment-content')?.textContent;
+
+            if (commentId && content) {
+                document.getElementById('editCommentId').value = commentId;
+                document.getElementById('editCommentContent').value = content;
+                const modal = new bootstrap.Modal(document.getElementById('editCommentModal'));
+                modal.show();
+            }
+        }
+
+        const deleteBtn = event.target.closest('.delete-comment-btn');
+        if (deleteBtn) {
+            const commentDiv = deleteBtn.closest('.comment-item');
+            currentDeleteCommentId = commentDiv?.getAttribute('data-comment-id');
+            if (currentDeleteCommentId) {
+                const modal = new bootstrap.Modal(document.getElementById('deleteCommentModal'));
+                modal.show();
+            }
         }
     });
+
+    // Submit edit comment form
+    const editCommentForm = document.getElementById('editCommentForm');
+    if (editCommentForm) {
+        editCommentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const commentId = document.getElementById('editCommentId').value;
+            const content = document.getElementById('editCommentContent').value.trim();
+
+            if (!content) {
+                document.getElementById('errorMessage').textContent = 'Comment cannot be empty.';
+                showModal('errorModal');
+                return;
+            }
+
+            const submitBtn = editCommentForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch(`/api/posts/${postId}/comments/${commentId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ content }),
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.ok) {
+                    hideModal('editCommentModal');
+                    await loadComments();
+                    document.getElementById('successMessage').textContent = 'Comment updated successfully!';
+                    showModal('successModal');
+                } else if (response.status === 403) {
+                    document.getElementById('errorMessage').textContent = 'You are not authorized to edit this comment.';
+                    showModal('errorModal');
+                } else {
+                    const error = await response.json();
+                    document.getElementById('errorMessage').textContent = getErrorMessage(error);
+                    showModal('errorModal');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error. Please try again.';
+                showModal('errorModal');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Changes';
+            }
+        });
+    }
+
+    // Confirm delete comment
+    const confirmDeleteComment = document.getElementById('confirmDeleteComment');
+    if (confirmDeleteComment) {
+        confirmDeleteComment.addEventListener('click', async () => {
+            if (!currentDeleteCommentId) return;
+
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const deleteBtn = confirmDeleteComment;
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = 'Deleting...';
+
+            try {
+                const response = await fetch(`/api/posts/${postId}/comments/${currentDeleteCommentId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.status === 204) {
+                    hideModal('deleteCommentModal');
+                    await loadComments();
+                    document.getElementById('successMessage').textContent = 'Comment deleted successfully!';
+                    showModal('successModal');
+                } else if (response.status === 403) {
+                    document.getElementById('errorMessage').textContent = 'You are not authorized to delete this comment.';
+                    showModal('errorModal');
+                } else {
+                    throw new Error('Failed to delete comment');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error. Please try again.';
+                showModal('errorModal');
+            } finally {
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = 'Delete';
+                currentDeleteCommentId = null;
+            }
+        });
+    }
+
+    // Edit post form
+    const editForm = document.getElementById('editPostForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const token = getToken();
+            if (!token) { window.location.href = '/login'; return; }
+
+            const formData = new FormData(editForm);
+            const postData = Object.fromEntries(formData.entries());
+            delete postData.post_id;
+
+            const submitBtn = editForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            try {
+                const response = await fetch(`/api/posts/${postId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(postData),
+                });
+
+                if (response.status === 401) { window.location.href = '/login'; return; }
+                if (response.status === 403) {
+                    document.getElementById('errorMessage').textContent = 'You are not authorized to edit this post.';
+                    hideModal('editModal');
+                    showModal('errorModal');
+                    return;
+                }
+
+                if (response.ok) {
+                    document.getElementById('successMessage').textContent = 'Post updated successfully!';
+                    hideModal('editModal');
+                    showModal('successModal');
+                    document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
+                        window.location.reload();
+                    }, { once: true });
+                } else {
+                    const error = await response.json();
+                    document.getElementById('errorMessage').textContent = getErrorMessage(error);
+                    hideModal('editModal');
+                    showModal('errorModal');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error. Please check your connection and try again.';
+                showModal('errorModal');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Changes';
+            }
+        });
+    }
+
+    // Delete post
+    const deleteButton = document.getElementById('confirmDelete');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', async () => {
+            const token = getToken();
+            if (!token) { window.location.href = '/login'; return; }
+
+            deleteButton.disabled = true;
+            deleteButton.textContent = 'Deleting...';
+
+            try {
+                const response = await fetch(`/api/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
+
+                if (response.status === 401) { window.location.href = '/login'; return; }
+                if (response.status === 403) {
+                    document.getElementById('errorMessage').textContent = 'You are not authorized to delete this post.';
+                    hideModal('deleteModal');
+                    showModal('errorModal');
+                    return;
+                }
+
+                if (response.status === 204) {
+                    window.location.href = '/';
+                } else {
+                    const error = await response.json();
+                    document.getElementById('errorMessage').textContent = getErrorMessage(error);
+                    hideModal('deleteModal');
+                    showModal('errorModal');
+                }
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = 'Network error. Please check your connection and try again.';
+                showModal('errorModal');
+            } finally {
+                deleteButton.disabled = false;
+                deleteButton.textContent = 'Delete';
+            }
+        });
+    }
+
+    // Like button handler
+    const likeBtn = document.querySelector('.like-btn');
+    if (likeBtn) {
+        likeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            const button = event.currentTarget;
+            const postId = parseInt(button.getAttribute('data-post-id'));
+            handleLike(postId, button);
+        });
+    }
 
     checkOwnership();
 </script>

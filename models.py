@@ -36,6 +36,12 @@ class User(Base):
         back_populates="liked_by",
     )
 
+    comments: Mapped[list[Comment]] = relationship(
+        back_populates="author",
+        cascade="all, delete-orphan",
+    )
+    
+
     @property
     def image_path(self) -> str:
         if self.image_file:
@@ -65,6 +71,30 @@ class Post(Base):
         secondary="post_likes",
         back_populates="liked_posts",
     )
+    comments: Mapped[list[Comment]] = relationship(
+        back_populates="post",
+        cascade="all, delete-orphan",
+        order_by="Comment.created_at"
+    )
+
+class Comment(Base):
+    __tablename__ = "comments"
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
+    author: Mapped[User] = relationship(back_populates="comments")
+    post: Mapped[Post] = relationship(back_populates="comments")
 
 
 class PostLike(Base):
