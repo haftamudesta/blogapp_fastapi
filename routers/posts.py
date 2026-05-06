@@ -47,6 +47,12 @@ async def get_posts(
     posts_data = []
     for post in posts:
         post_dict = PostResponse.model_validate(post)
+
+        # Get comments count
+        comments_count_result = await db.execute(
+            select(func.count()).select_from(models.Comment).where(models.Comment.post_id == post.id)
+        )
+        post_dict.comments_count = comments_count_result.scalar() or 0
         
         # Check if current user liked this post
         like_result = await db.execute(
@@ -110,6 +116,22 @@ async def get_post(
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     
+    # Get comments with authors
+    comments_result = await db.execute(
+        select(models.Comment)
+        .options(selectinload(models.Comment.author))
+        .where(models.Comment.post_id == post_id)
+        .order_by(models.Comment.created_at.desc())
+        .limit(20) 
+    )
+    comments = comments_result.scalars().all()
+    
+    # Get comments count
+    comments_count_result = await db.execute(
+        select(func.count()).select_from(models.Comment).where(models.Comment.post_id == post_id)
+    )
+    comments_count = comments_count_result.scalar() or 0
+
     # Check if current user liked this post
     post_response = PostResponse.model_validate(post)
     like_result = await db.execute(
