@@ -16,7 +16,7 @@ from schemas import (
     PaginatedCommentsResponse,
 )
 
-router = APIRouter(prefix="/api/posts/{post_id}/comments", tags=["comments"])
+router = APIRouter()
 
 
 @router.post("", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
