@@ -16,7 +16,7 @@ from database import get_db
 
 password_hash = PasswordHash.recommended()
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/token", auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -103,3 +103,26 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[models.User, Depends(get_current_user)]
+
+async def get_current_user_optional(
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
+    db: Annotated[AsyncSession, Depends(get_db)] = None,
+) -> models.User | None:
+    """Get current user if authenticated, otherwise return None."""
+    if not token:
+        return None
+    
+    user_id = verify_access_token(token)
+    if user_id is None:
+        return None
+
+    try:
+        user_id_int = int(user_id)
+    except (TypeError, ValueError):
+        return None
+
+    result = await db.execute(
+        select(models.User).where(models.User.id == user_id_int),
+    )
+    user = result.scalars().first()
+    return user

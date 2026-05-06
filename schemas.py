@@ -93,8 +93,12 @@ class PaginatedPostsResponse(BaseModel):
     limit: int
     has_more: bool
 
-
-
+class PaginatedCommentsResponse(BaseModel):
+    comments: list[CommentResponse]
+    total: int
+    skip: int
+    limit: int
+    has_more: bool
 
 
 class ForgotPasswordRequest(BaseModel):
