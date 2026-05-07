@@ -51,6 +51,7 @@ class PostUpdate(BaseModel):
 
 class CommentBase(BaseModel):
     content: str = Field(min_length=1, max_length=1000)
+    image_url: str | None = None  
 
 
 class CommentCreate(CommentBase):
@@ -69,6 +70,7 @@ class CommentResponse(CommentBase):
     created_at: datetime
     updated_at: datetime
     author: UserPublic
+    image_url: str | None = None
 
 
 

@@ -18,7 +18,7 @@ import models
 from auth import get_current_user, get_current_user_optional
 from config import settings
 from database import engine, get_db
-from routers import posts, users, likes, comments
+from routers import posts, users, likes, comments,uploads
 import os
 
 
@@ -46,6 +46,7 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
 app.include_router(likes.router, prefix="/api/posts", tags=["likes"])
 app.include_router(comments.router, prefix="/api/posts/{post_id}/comments", tags=["comments"]) 
+app.include_router(uploads.router,prefix="/api/uploads", tags=["uploads"])
 
 
 @app.middleware("http")

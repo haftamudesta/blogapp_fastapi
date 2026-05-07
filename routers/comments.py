@@ -37,6 +37,7 @@ async def create_comment(
     
     new_comment = models.Comment(
         content=comment.content,
+        image_url=comment.image_url, 
         user_id=current_user.id,
         post_id=post_id,
     )
