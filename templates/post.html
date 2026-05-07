@@ -36,7 +36,7 @@
 <div class="content-section py-3 px-4 mb-4">
     <h3 class="h5 mb-3">Comments (<span class="comment-count-display">{{ post.comments|length }}</span>)</h3>
 
-    <!-- Add Comment Form -->
+    <!-- Add Comment Form with Image Upload -->
     <div class="mb-4">
         <form id="commentForm">
             <div class="mb-3">
@@ -44,6 +44,20 @@
                 <textarea class="form-control" id="commentContent" name="content" rows="3"
                     placeholder="Write your comment here..." required></textarea>
             </div>
+
+            <!-- Image Upload Section -->
+            <div class="mb-3">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary" id="uploadCommentImageBtn">
+                        📷 Upload Image
+                    </button>
+                    <input type="file" id="commentImageInput" accept="image/jpeg,image/png,image/gif,image/webp"
+                        style="display: none;">
+                    <small class="text-muted">Max 5MB (JPEG, PNG, GIF, WebP)</small>
+                </div>
+                <div id="commentImagePreview" class="mt-2"></div>
+            </div>
+
             <button type="submit" class="btn btn-primary">Post Comment</button>
         </form>
     </div>
@@ -70,6 +84,12 @@
                             {% endif %}
                         </div>
                         <p class="mt-1 mb-0 comment-content">{{ comment.content }}</p>
+                        {% if comment.image_url %}
+                        <div class="mt-2">
+                            <img src="{{ comment.image_url }}" alt="Comment image" class="img-fluid rounded"
+                                style="max-height: 200px; max-width: 100%;">
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="comment-actions ms-2" data-comment-id="{{ comment.id }}"
@@ -194,6 +214,9 @@
     const postId = {{ post.id }};
     const postUserId = {{ post.user_id }};
 
+    // Image upload state
+    let currentImageUrl = null;
+
     // Check post ownership for edit/delete buttons
     async function checkOwnership() {
         const user = await getCurrentUser();
@@ -246,6 +269,101 @@
         }
     }
 
+    // Image upload functionality
+    function setupImageUpload() {
+        const uploadBtn = document.getElementById('uploadCommentImageBtn');
+        const imageInput = document.getElementById('commentImageInput');
+        const imagePreview = document.getElementById('commentImagePreview');
+
+        if (!uploadBtn) return;
+
+        uploadBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File too large. Maximum size is 5MB.');
+                return;
+            }
+
+            const token = getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/api/uploads/comment-image', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: formData,
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentImageUrl = data.url;
+
+                    // Show preview
+                    imagePreview.innerHTML = `
+                        <div class="position-relative d-inline-block">
+                            <img src="${currentImageUrl}" alt="Preview" class="img-thumbnail" style="max-height: 100px; max-width: 100px;">
+                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 rounded-circle" id="removeImageBtn" style="width: 24px; height: 24px; padding: 0; line-height: 1;">×</button>
+                        </div>
+                    `;
+
+                    document.getElementById('removeImageBtn')?.addEventListener('click', () => {
+                        currentImageUrl = null;
+                        imagePreview.innerHTML = '';
+                        imageInput.value = '';
+                    });
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Network error. Please try again.');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '📷 Upload Image';
+            }
+        });
+    }
+
+    // Clear image after comment submission
+    function clearImage() {
+        currentImageUrl = null;
+        const imagePreview = document.getElementById('commentImagePreview');
+        const imageInput = document.getElementById('commentImageInput');
+        if (imagePreview) imagePreview.innerHTML = '';
+        if (imageInput) imageInput.value = '';
+    }
+
     // Comment functionality
     let currentDeleteCommentId = null;
 
@@ -296,6 +414,7 @@
                                 ${comment.created_at !== comment.updated_at ? '<small class="text-body-secondary fst-italic">(edited)</small>' : ''}
                             </div>
                             <p class="mt-1 mb-0 comment-content">${escapeHtml(comment.content)}</p>
+                            ${comment.image_url ? `<div class="mt-2"><img src="${escapeHtml(comment.image_url)}" alt="Comment image" class="img-fluid rounded" style="max-height: 200px; max-width: 100%;"></div>` : ''}
                         </div>
                     </div>
                     <div class="comment-actions ms-2" data-comment-id="${comment.id}" data-comment-user-id="${comment.user_id}">
@@ -306,7 +425,6 @@
             </div>
         `).join('');
 
-        // Show edit/delete buttons for user's own comments
         showCommentActions();
     }
 
@@ -346,7 +464,7 @@
         });
     }
 
-    // Create comment
+    // Create comment with image
     const commentForm = document.getElementById('commentForm');
     if (commentForm) {
         commentForm.addEventListener('submit', async (event) => {
@@ -376,7 +494,10 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ content }),
+                    body: JSON.stringify({
+                        content: content,
+                        image_url: currentImageUrl
+                    }),
                 });
 
                 if (response.status === 401) {
@@ -386,6 +507,7 @@
 
                 if (response.ok) {
                     document.getElementById('commentContent').value = '';
+                    clearImage(); // Clear the uploaded image
                     await loadComments();
                     document.getElementById('successMessage').textContent = 'Comment posted successfully!';
                     showModal('successModal');
@@ -653,6 +775,8 @@
         });
     }
 
+    // Initialize image upload
+    setupImageUpload();
     checkOwnership();
 </script>
 {% endblock scripts %}
