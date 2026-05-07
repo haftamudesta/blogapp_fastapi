@@ -82,6 +82,7 @@ class Comment(Base):
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
