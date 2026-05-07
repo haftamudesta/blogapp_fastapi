@@ -15,6 +15,7 @@ async def upload_comment_image_endpoint(
     Upload an image for a comment. Returns the image URL.
     """
     try:
+        # Validate file type
         allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
         if file.content_type not in allowed_types:
             raise HTTPException(

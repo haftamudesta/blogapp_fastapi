@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Cloudinary settings
     cloudinary_cloud_name: str=""
     cloudinary_api_key: str=""
-    cloudinary_api_secret: SecretStr = SecretStr("")
+    cloudinary_api_secret: str
 
 
 settings = Settings()  # type: ignore[call-arg] # Loaded from .env file

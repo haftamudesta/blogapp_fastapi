@@ -3,30 +3,23 @@ import cloudinary.uploader
 from fastapi import UploadFile, HTTPException, status
 from config import settings
 import asyncio
+import tempfile
+import os
 
 # Configure Cloudinary
-def configure_cloudinary():
-    cloud_name = settings.cloudinary_cloud_name
-    api_key = settings.cloudinary_api_key
-    api_secret = settings.cloudinary_api_secret.get_secret_value() if settings.cloudinary_api_secret else ""
-    
-    if not cloud_name or not api_key or not api_secret:
-        raise Exception("Cloudinary credentials not configured")
-    
-    cloudinary.config(
-        cloud_name=cloud_name,
-        api_key=api_key,
-        api_secret=api_secret
-    )
+cloudinary.config(
+    cloud_name=settings.cloudinary_cloud_name,
+    api_key=settings.cloudinary_api_key,
+    api_secret=settings.cloudinary_api_secret
+)
 
 async def upload_comment_image(file: UploadFile) -> str:
     """
     Upload an image to Cloudinary and return the secure URL.
     """
+    temp_file = None
+    
     try:
-        # Configure Cloudinary
-        configure_cloudinary()
-        
         # Read file content
         file_content = await file.read()
         
@@ -37,10 +30,16 @@ async def upload_comment_image(file: UploadFile) -> str:
                 detail="File too large. Maximum size is 5MB."
             )
         
+        # Create temporary file
+        file_extension = file.filename.split('.')[-1].lower()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as tmp:
+            tmp.write(file_content)
+            temp_file = tmp.name
+        
         # Upload to Cloudinary
         upload_result = await asyncio.to_thread(
             cloudinary.uploader.upload,
-            file_content,
+            temp_file,
             folder="blog_comments",
             allowed_formats=["jpg", "jpeg", "png", "gif", "webp"],
             transformation=[
@@ -57,3 +56,7 @@ async def upload_comment_image(file: UploadFile) -> str:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error uploading image: {str(e)}"
         )
+    finally:
+        # Clean up temp file
+        if temp_file and os.path.exists(temp_file):
+            os.unlink(temp_file)
